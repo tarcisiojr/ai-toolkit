@@ -11,6 +11,9 @@ import { removeCommand } from '../commands/remove.js';
 import { publishCommand } from '../commands/publish.js';
 import { listCommand } from '../commands/list.js';
 import { statusCommand } from '../commands/status.js';
+import { teamCommand } from '../commands/team.js';
+import { configCommand } from '../commands/config.js';
+import { syncCommand } from '../commands/sync.js';
 import { logger } from '../utils/logger.js';
 
 const program = new Command();
@@ -29,6 +32,9 @@ program.addCommand(removeCommand);
 program.addCommand(publishCommand);
 program.addCommand(listCommand);
 program.addCommand(statusCommand);
+program.addCommand(teamCommand);
+program.addCommand(configCommand);
+program.addCommand(syncCommand);
 
 // ── Help personalizado com banner e cores ────────────────────────────────
 program.configureHelp({
@@ -62,11 +68,13 @@ program.configureHelp({
     // Agrupar comandos por categoria
     const authCommands = ['login', 'logout'];
     const registryCommands = ['search', 'install', 'update', 'remove', 'publish'];
-    const projectCommands = ['list', 'status'];
+    const projectCommands = ['list', 'status', 'sync', 'config'];
+    const teamCommands = ['team'];
 
     const groups: Array<{ label: string; names: string[] }> = [
       { label: 'Registry', names: registryCommands },
       { label: 'Projeto', names: projectCommands },
+      { label: 'Equipes', names: teamCommands },
       { label: 'Autenticacao', names: authCommands },
     ];
 

@@ -60,6 +60,7 @@ export function removeLockEntry(
   lockFile: LockFile,
   artifactSlug: string,
 ): LockFile {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { [artifactSlug]: _, ...remaining } = lockFile.artifacts;
   return {
     ...lockFile,
