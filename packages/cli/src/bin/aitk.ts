@@ -14,6 +14,7 @@ import { statusCommand } from '../commands/status.js';
 import { teamCommand } from '../commands/team.js';
 import { configCommand } from '../commands/config.js';
 import { syncCommand } from '../commands/sync.js';
+import { initCommand } from '../commands/init.js';
 import { logger } from '../utils/logger.js';
 
 const program = new Command();
@@ -35,6 +36,7 @@ program.addCommand(statusCommand);
 program.addCommand(teamCommand);
 program.addCommand(configCommand);
 program.addCommand(syncCommand);
+program.addCommand(initCommand);
 
 // ── Help personalizado com banner e cores ────────────────────────────────
 program.configureHelp({
@@ -68,7 +70,7 @@ program.configureHelp({
     // Agrupar comandos por categoria
     const authCommands = ['login', 'logout'];
     const registryCommands = ['search', 'install', 'update', 'remove', 'publish'];
-    const projectCommands = ['list', 'status', 'sync', 'config'];
+    const projectCommands = ['init', 'list', 'status', 'sync', 'config'];
     const teamCommands = ['team'];
 
     const groups: Array<{ label: string; names: string[] }> = [
@@ -103,6 +105,8 @@ program.configureHelp({
 
     // Exemplos
     output.push(`  ${chalk.yellow.bold('EXEMPLOS')}`);
+    output.push(`    ${chalk.gray('$')} ${chalk.cyan('aitk init')}                          ${chalk.gray('# Inicializar projeto')}`);
+    output.push(`    ${chalk.gray('$')} ${chalk.cyan('aitk init')} ${chalk.white('official/starter-kit')}       ${chalk.gray('# Iniciar com template')}`);
     output.push(`    ${chalk.gray('$')} ${chalk.cyan('aitk search')} ${chalk.white('"memory"')}`);
     output.push(`    ${chalk.gray('$')} ${chalk.cyan('aitk install')} ${chalk.white('official/code-review')}`);
     output.push(`    ${chalk.gray('$')} ${chalk.cyan('aitk list')}`);

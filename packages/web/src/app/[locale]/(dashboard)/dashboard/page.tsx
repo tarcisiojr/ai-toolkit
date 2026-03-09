@@ -314,7 +314,7 @@ export default async function DashboardPage({ params }: Props) {
                 {artifacts.map((artifact) => (
                   <a
                     key={artifact.id}
-                    href={`/${locale}/${artifact.scope}/${artifact.name}`}
+                    href={`/${locale}/a/${artifact.scope}/${artifact.name}`}
                     className="group flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-4 transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.04]"
                   >
                     <div className="flex items-center gap-3">

@@ -195,5 +195,42 @@
     "editTeam": "Editar Equipe",
     "teamNotFound": "Equipe não encontrada.",
     "teamNotFoundDesc": "A equipe que você procura não existe ou foi removida."
+  },
+  "ArtifactDetail": {
+    "install": "Instalar",
+    "installCommand": "Comando de instalação",
+    "versions": "Versões",
+    "latestVersion": "Versão mais recente",
+    "downloads": "Downloads",
+    "published": "Publicado",
+    "keywords": "Palavras-chave",
+    "categories": "Categorias",
+    "license": "Licença",
+    "repository": "Repositório",
+    "toolSupport": "Ferramentas suportadas",
+    "changelog": "Registro de mudanças",
+    "noVersions": "Nenhuma versão publicada ainda.",
+    "notFound": "Artefato não encontrado",
+    "copyCommand": "Copiar comando",
+    "weeklyDownloads": "Downloads semanais",
+    "type": "Tipo",
+    "deprecated": "Descontinuado",
+    "verified": "Verificado",
+    "details": "Informações",
+    "updated": "Atualizado em",
+    "installation": "Instalação",
+    "explore": "Explorar",
+    "links": "Links"
+  },
+  "UserProfile": {
+    "artifacts": "Artefatos",
+    "publicArtifacts": "Artefatos públicos",
+    "totalDownloads": "Total de downloads",
+    "memberSince": "Membro desde",
+    "noArtifacts": "Nenhum artefato público ainda.",
+    "notFound": "Usuário não encontrado",
+    "viewOnGithub": "Ver no GitHub",
+    "bio": "Bio",
+    "profile": "Perfil"
   }
 }

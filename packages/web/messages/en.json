@@ -195,5 +195,42 @@
     "editTeam": "Edit Team",
     "teamNotFound": "Team not found.",
     "teamNotFoundDesc": "The team you are looking for does not exist or has been removed."
+  },
+  "ArtifactDetail": {
+    "install": "Install",
+    "installCommand": "Install command",
+    "versions": "Versions",
+    "latestVersion": "Latest version",
+    "downloads": "Downloads",
+    "published": "Published",
+    "keywords": "Keywords",
+    "categories": "Categories",
+    "license": "License",
+    "repository": "Repository",
+    "toolSupport": "Supported tools",
+    "changelog": "Changelog",
+    "noVersions": "No versions published yet.",
+    "notFound": "Artifact not found",
+    "copyCommand": "Copy command",
+    "weeklyDownloads": "Weekly downloads",
+    "type": "Type",
+    "deprecated": "Deprecated",
+    "verified": "Verified",
+    "details": "Details",
+    "updated": "Updated",
+    "installation": "Installation",
+    "explore": "Explore",
+    "links": "Links"
+  },
+  "UserProfile": {
+    "artifacts": "Artifacts",
+    "publicArtifacts": "Public artifacts",
+    "totalDownloads": "Total downloads",
+    "memberSince": "Member since",
+    "noArtifacts": "No public artifacts yet.",
+    "notFound": "User not found",
+    "viewOnGithub": "View on GitHub",
+    "bio": "Bio",
+    "profile": "Profile"
   }
 }

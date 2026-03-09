@@ -17,6 +17,7 @@ import { SkillInstaller } from '../installers/skill-installer.js';
 import { McpInstaller } from '../installers/mcp-installer.js';
 import { ConfigInstaller } from '../installers/config-installer.js';
 import { HookInstaller } from '../installers/hook-installer.js';
+import { TemplateInstaller } from '../installers/template-installer.js';
 import { BaseInstaller } from '../installers/base-installer.js';
 import { logger } from '../utils/logger.js';
 
@@ -41,6 +42,7 @@ function getInstaller(type: string): BaseInstaller {
     mcp: new McpInstaller(),
     config: new ConfigInstaller(),
     hook: new HookInstaller(),
+    template: new TemplateInstaller(),
   };
 
   const installer = installers[type];
