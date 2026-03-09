@@ -6,6 +6,8 @@ import { loginCommand } from '../commands/login.js';
 import { logoutCommand } from '../commands/logout.js';
 import { searchCommand } from '../commands/search.js';
 import { installCommand } from '../commands/install.js';
+import { updateCommand } from '../commands/update.js';
+import { removeCommand } from '../commands/remove.js';
 import { publishCommand } from '../commands/publish.js';
 import { listCommand } from '../commands/list.js';
 import { statusCommand } from '../commands/status.js';
@@ -22,6 +24,8 @@ program.addCommand(loginCommand);
 program.addCommand(logoutCommand);
 program.addCommand(searchCommand);
 program.addCommand(installCommand);
+program.addCommand(updateCommand);
+program.addCommand(removeCommand);
 program.addCommand(publishCommand);
 program.addCommand(listCommand);
 program.addCommand(statusCommand);
@@ -57,7 +61,7 @@ program.configureHelp({
 
     // Agrupar comandos por categoria
     const authCommands = ['login', 'logout'];
-    const registryCommands = ['search', 'install', 'publish'];
+    const registryCommands = ['search', 'install', 'update', 'remove', 'publish'];
     const projectCommands = ['list', 'status'];
 
     const groups: Array<{ label: string; names: string[] }> = [

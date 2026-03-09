@@ -95,3 +95,32 @@ export async function GET() {
 
   return apiSuccess(tokens);
 }
+
+/** DELETE /api/v1/auth/cli-token?id=<token_id> — Revogar token */
+export async function DELETE(request: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return apiError('UNAUTHORIZED', 'Autenticacao necessaria', 401);
+  }
+
+  const tokenId = request.nextUrl.searchParams.get('id');
+
+  if (!tokenId) {
+    return apiError('VALIDATION_ERROR', 'ID do token e obrigatorio', 400);
+  }
+
+  // Garante que o token pertence ao usuario autenticado
+  const { error } = await supabase
+    .from('api_tokens')
+    .delete()
+    .eq('id', tokenId)
+    .eq('user_id', user.id);
+
+  if (error) {
+    return apiError('DB_ERROR', error.message, 500);
+  }
+
+  return apiSuccess({ deleted: true });
+}
