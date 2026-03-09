@@ -1,9 +1,17 @@
-import { readFileSync, writeFileSync, unlinkSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, writeFileSync, unlinkSync, existsSync, mkdirSync } from 'node:fs';
+import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import type { CliAuth } from '@ai-toolkit/shared';
 
 const AUTH_FILE = join(homedir(), '.aitk', 'auth.json');
+
+/** Garante que o diretório de autenticação existe */
+function ensureAuthDir(): void {
+  const dir = dirname(AUTH_FILE);
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+}
 
 /** Lê os dados de autenticação */
 export function getAuth(): CliAuth | null {
@@ -21,6 +29,7 @@ export function getAuth(): CliAuth | null {
 
 /** Salva os dados de autenticação */
 export function saveAuth(auth: CliAuth): void {
+  ensureAuthDir();
   writeFileSync(AUTH_FILE, JSON.stringify(auth, null, 2));
 }
 
