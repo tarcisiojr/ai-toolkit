@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+.next/
+out/
+
+# Turbo
+.turbo/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Cache
+.cache/
+
+# Supabase
+supabase/.temp/
+
+# CLI local config (não versionar tokens)
+.aitk/
+
+# Claude Code local settings
+.claude/settings.local.json
+.claude/plans/

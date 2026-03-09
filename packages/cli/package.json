@@ -1,0 +1,33 @@
+{
+  "name": "@ai-toolkit/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "aitk": "./dist/bin/aitk.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ai-toolkit/shared": "*",
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "inquirer": "^12.4.2",
+    "ora": "^8.2.0",
+    "tar": "^7.4.3"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^22.13.10",
+    "@types/tar": "^6.1.13",
+    "eslint": "^9.22.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.9"
+  }
+}
