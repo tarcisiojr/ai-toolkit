@@ -14,6 +14,9 @@ import {
   addArtifactToManifest,
 } from '../core/manifest.js';
 import { SkillInstaller } from '../installers/skill-installer.js';
+import { McpInstaller } from '../installers/mcp-installer.js';
+import { ConfigInstaller } from '../installers/config-installer.js';
+import { HookInstaller } from '../installers/hook-installer.js';
 import { BaseInstaller } from '../installers/base-installer.js';
 import { logger } from '../utils/logger.js';
 
@@ -35,7 +38,9 @@ function getInstaller(type: string): BaseInstaller {
   // Mapa de instaladores por tipo de artefato
   const installers: Record<string, BaseInstaller> = {
     skill: new SkillInstaller(),
-    // Futuros instaladores: mcp, template, config, hook
+    mcp: new McpInstaller(),
+    config: new ConfigInstaller(),
+    hook: new HookInstaller(),
   };
 
   const installer = installers[type];

@@ -60,8 +60,10 @@ export function removeArtifactFromManifest(
   manifest: ProjectManifest,
   artifactSlug: string,
 ): ProjectManifest {
-  const { [artifactSlug]: _, ...artifacts } = manifest.artifacts;
-  const { [artifactSlug]: __, ...devArtifacts } = manifest.devArtifacts || {};
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { [artifactSlug]: _removed, ...artifacts } = manifest.artifacts;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { [artifactSlug]: _removedDev, ...devArtifacts } = manifest.devArtifacts || {};
   return {
     ...manifest,
     artifacts,
