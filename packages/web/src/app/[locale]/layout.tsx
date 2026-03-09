@@ -66,6 +66,12 @@ export default async function LocaleLayout({
                 {t('Header.explore')}
               </a>
               <a
+                href={`/${locale}/docs`}
+                className="neon-link font-[family-name:var(--font-mono)] text-sm tracking-wide"
+              >
+                {t('Header.docs')}
+              </a>
+              <a
                 href={`/${otherLocale}`}
                 className="rounded border border-white/10 px-2 py-1 font-[family-name:var(--font-mono)] text-xs text-[#64748b] transition-colors hover:text-[#00d4ff]"
               >

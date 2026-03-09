@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancela execucoes anteriores na mesma branch
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  # Variaveis de ambiente necessarias para o build do Next.js
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key' }}
+  NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL || 'https://aitk.dev' }}
+
+jobs:
+  # Verificacao de qualidade: lint, type-check e testes
+  quality:
+    name: Qualidade
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Build shared (dependencia dos demais)
+        run: npx turbo run build --filter=@ai-toolkit/shared
+
+      - name: Lint
+        run: npx turbo run lint
+
+      - name: Type Check
+        run: npx turbo run type-check
+
+      - name: Testes
+        run: npx turbo run test
+
+  # Build completo de todos os pacotes
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Build completo
+        run: npx turbo run build
+
+      - name: Verificar artefatos do CLI
+        run: |
+          # Verificar se o binario do CLI foi gerado corretamente
+          test -f packages/cli/dist/bin/aitk.js && echo "✅ CLI binario gerado" || (echo "❌ CLI binario nao encontrado" && exit 1)
+
+      - name: Verificar build do Next.js
+        run: |
+          test -d packages/web/.next && echo "✅ Next.js build gerado" || (echo "❌ Next.js build nao encontrado" && exit 1)

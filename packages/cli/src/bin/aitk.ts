@@ -15,6 +15,7 @@ import { teamCommand } from '../commands/team.js';
 import { configCommand } from '../commands/config.js';
 import { syncCommand } from '../commands/sync.js';
 import { initCommand } from '../commands/init.js';
+import { completionsCommand } from '../commands/completions.js';
 import { logger } from '../utils/logger.js';
 
 const program = new Command();
@@ -37,6 +38,7 @@ program.addCommand(teamCommand);
 program.addCommand(configCommand);
 program.addCommand(syncCommand);
 program.addCommand(initCommand);
+program.addCommand(completionsCommand);
 
 // ── Help personalizado com banner e cores ────────────────────────────────
 program.configureHelp({
@@ -72,12 +74,14 @@ program.configureHelp({
     const registryCommands = ['search', 'install', 'update', 'remove', 'publish'];
     const projectCommands = ['init', 'list', 'status', 'sync', 'config'];
     const teamCommands = ['team'];
+    const utilCommands = ['completions'];
 
     const groups: Array<{ label: string; names: string[] }> = [
       { label: 'Registry', names: registryCommands },
       { label: 'Projeto', names: projectCommands },
       { label: 'Equipes', names: teamCommands },
       { label: 'Autenticacao', names: authCommands },
+      { label: 'Utilitarios', names: utilCommands },
     ];
 
     for (const group of groups) {
