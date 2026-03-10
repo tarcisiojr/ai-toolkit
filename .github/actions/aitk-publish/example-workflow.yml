@@ -1,0 +1,41 @@
+# Exemplo de workflow para publicar artefatos no ai-toolkit.
+#
+# Copie este arquivo para o seu repositório em:
+#   .github/workflows/aitk-publish.yml
+#
+# Configuração necessária:
+# 1. Gere um API Token em https://aitk.dev/dashboard
+# 2. Adicione o token como secret AITK_API_TOKEN no seu repositório
+# 3. Crie o aitk-artifact.json na raiz do seu artefato
+#
+# Documentação: https://aitk.dev/docs
+
+name: Publicar no ai-toolkit
+
+on:
+  # Publica automaticamente ao criar uma release
+  release:
+    types: [published]
+
+  # Permite publicação manual
+  workflow_dispatch:
+    inputs:
+      directory:
+        description: 'Diretório do artefato'
+        required: false
+        default: '.'
+
+jobs:
+  publish:
+    name: Publicar artefato
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Publicar no ai-toolkit
+        uses: tarcisiojr/ai-toolkit/.github/actions/aitk-publish@main
+        with:
+          api-token: ${{ secrets.AITK_API_TOKEN }}
+          directory: ${{ github.event.inputs.directory || '.' }}
+          access: 'public'

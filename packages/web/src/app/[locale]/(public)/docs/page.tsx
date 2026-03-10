@@ -415,6 +415,124 @@ export default async function DocsPage({
           </div>
         </div>
       </div>
+
+      {/* Secao de CI/CD — GitHub Action */}
+      <div className="mt-8 glass rounded-2xl p-6">
+        <h3 className="mb-4 font-[family-name:var(--font-jetbrains)] text-xl font-semibold text-[#e2e8f0]">
+          {t('cicdTitle')}
+        </h3>
+        <p className="mb-6 text-sm text-[#94a3b8]">
+          {t('cicdDesc')}
+        </p>
+
+        {/* Passos de configuracao */}
+        <div className="mb-6">
+          <div className="font-[family-name:var(--font-jetbrains)] text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
+            {t('cicdSetup')}
+          </div>
+          <ol className="space-y-2 text-sm text-[#94a3b8]">
+            <li className="flex gap-2">
+              <span className="shrink-0 font-[family-name:var(--font-jetbrains)] text-[#00d4ff]">1.</span>
+              {t('cicdStep1')}
+            </li>
+            <li className="flex gap-2">
+              <span className="shrink-0 font-[family-name:var(--font-jetbrains)] text-[#00d4ff]">2.</span>
+              {t('cicdStep2')}
+            </li>
+            <li className="flex gap-2">
+              <span className="shrink-0 font-[family-name:var(--font-jetbrains)] text-[#00d4ff]">3.</span>
+              {t('cicdStep3')}
+            </li>
+            <li className="flex gap-2">
+              <span className="shrink-0 font-[family-name:var(--font-jetbrains)] text-[#00d4ff]">4.</span>
+              {t('cicdStep4')}
+            </li>
+          </ol>
+        </div>
+
+        {/* Exemplo de workflow */}
+        <div className="mb-6">
+          <div className="font-[family-name:var(--font-jetbrains)] text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-2">
+            {t('cicdUsage')}
+          </div>
+          <div className="terminal-window">
+            <div className="terminal-header">
+              <div className="terminal-dot terminal-dot-red" />
+              <div className="terminal-dot terminal-dot-yellow" />
+              <div className="terminal-dot terminal-dot-green" />
+              <span className="terminal-title">.github/workflows/aitk-publish.yml</span>
+            </div>
+            <div className="terminal-body text-xs leading-relaxed">
+              <div className="text-[#64748b]">{'# .github/workflows/aitk-publish.yml'}</div>
+              <div><span className="text-[#ff8800]">name</span>: Publish to ai-toolkit</div>
+              <div><span className="text-[#ff8800]">on</span>:</div>
+              <div>{'  '}<span className="text-[#ff8800]">release</span>:</div>
+              <div>{'    '}<span className="text-[#ff8800]">types</span>: [published]</div>
+              <div><span className="text-[#ff8800]">jobs</span>:</div>
+              <div>{'  '}<span className="text-[#ff8800]">publish</span>:</div>
+              <div>{'    '}<span className="text-[#ff8800]">runs-on</span>: ubuntu-latest</div>
+              <div>{'    '}<span className="text-[#ff8800]">steps</span>:</div>
+              <div>{'      '}- <span className="text-[#ff8800]">uses</span>: actions/checkout@v4</div>
+              <div>{'      '}- <span className="text-[#ff8800]">uses</span>: <span className="text-[#00ff88]">tarcisiojr/ai-toolkit/.github/actions/aitk-publish@main</span></div>
+              <div>{'        '}<span className="text-[#ff8800]">with</span>:</div>
+              <div>{'          '}<span className="text-[#ff8800]">api-token</span>: {'${{ secrets.AITK_API_TOKEN }}'}</div>
+              <div>{'          '}<span className="text-[#ff8800]">directory</span>: &apos;.&apos;</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Inputs da action */}
+        <div>
+          <div className="font-[family-name:var(--font-jetbrains)] text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-2">
+            Inputs
+          </div>
+          <div className="space-y-1.5">
+            {[
+              { name: 'api-token', type: 'string', desc: t('cicdInputToken'), req: true },
+              { name: 'directory', type: 'string', desc: t('cicdInputDir'), req: false },
+              { name: 'access', type: 'string', desc: t('cicdInputAccess'), req: false },
+              { name: 'team', type: 'string', desc: t('cicdInputTeam'), req: false },
+              { name: 'registry-url', type: 'string', desc: t('cicdInputRegistry'), req: false },
+            ].map((input) => (
+              <div
+                key={input.name}
+                className="flex items-baseline gap-3 rounded-lg bg-white/[0.02] px-3 py-2 text-sm"
+              >
+                <code className="shrink-0 font-[family-name:var(--font-jetbrains)] text-[#00d4ff]">
+                  {input.name}
+                </code>
+                <span className="shrink-0 font-[family-name:var(--font-jetbrains)] text-xs text-[#64748b]">
+                  {input.type}
+                </span>
+                {input.req && (
+                  <span className="shrink-0 font-[family-name:var(--font-jetbrains)] text-[10px] text-[#ff2d95]">
+                    {t('required')}
+                  </span>
+                )}
+                <span className="text-[#94a3b8]">{input.desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Output da action */}
+        <div className="mt-4">
+          <div className="font-[family-name:var(--font-jetbrains)] text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-2">
+            Outputs
+          </div>
+          <div className="rounded-lg bg-white/[0.02] px-3 py-2 text-sm">
+            <div className="flex items-baseline gap-3">
+              <code className="shrink-0 font-[family-name:var(--font-jetbrains)] text-[#00d4ff]">
+                artifact-slug
+              </code>
+              <span className="shrink-0 font-[family-name:var(--font-jetbrains)] text-xs text-[#64748b]">
+                string
+              </span>
+              <span className="text-[#94a3b8]">{t('cicdOutputSlug')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

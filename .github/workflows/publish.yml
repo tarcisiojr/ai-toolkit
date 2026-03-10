@@ -1,0 +1,194 @@
+name: Publish Artifact
+
+# Workflow para publicar artefatos no registry do ai-toolkit.
+# Pode ser acionado por:
+# - Criação de release no GitHub
+# - Push de tag (v*)
+# - Execução manual (workflow_dispatch)
+
+on:
+  release:
+    types: [published]
+
+  push:
+    tags:
+      - 'v*'
+
+  workflow_dispatch:
+    inputs:
+      artifact_dir:
+        description: 'Diretório do artefato (relativo à raiz do repositório)'
+        required: true
+        default: '.'
+      access:
+        description: 'Visibilidade do artefato'
+        required: false
+        default: 'public'
+        type: choice
+        options:
+          - public
+          - private
+          - team
+      team:
+        description: 'Slug da equipe (necessário apenas para access=team)'
+        required: false
+      registry_url:
+        description: 'URL do registry (padrão: https://aitk.dev)'
+        required: false
+        default: 'https://aitk.dev'
+      dry_run:
+        description: 'Executar sem publicar (apenas validar)'
+        required: false
+        default: false
+        type: boolean
+
+# Evita publicações duplicadas simultâneas
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # Validação de qualidade antes de publicar
+  validate:
+    name: Validar
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build shared
+        run: npx turbo run build --filter=@ai-toolkit/shared
+
+      - name: Lint
+        run: npx turbo run lint
+
+      - name: Type Check
+        run: npx turbo run type-check
+
+      - name: Testes
+        run: npx turbo run test
+
+  # Publicação no registry
+  publish:
+    name: Publicar
+    runs-on: ubuntu-latest
+    needs: validate
+    # Pular publicação no modo dry-run
+    if: ${{ github.event.inputs.dry_run != 'true' }}
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build CLI
+        run: npx turbo run build --filter=@ai-toolkit/cli
+
+      - name: Verificar CLI
+        run: |
+          test -f packages/cli/dist/bin/aitk.js && echo "✅ CLI disponível" || (echo "❌ CLI não encontrado" && exit 1)
+
+      - name: Configurar autenticação
+        run: |
+          # Cria diretório de configuração do aitk
+          mkdir -p ~/.aitk
+
+          # Escreve token de autenticação
+          echo '{"token":"${{ secrets.AITK_API_TOKEN }}","username":"ci-publisher"}' > ~/.aitk/auth.json
+
+          # Configura registry (se URL customizada for fornecida)
+          REGISTRY_URL="${{ github.event.inputs.registry_url || 'https://aitk.dev' }}"
+          echo "{\"registry\":\"${REGISTRY_URL}\",\"defaultTool\":\"claude-code\"}" > ~/.aitk/config.json
+
+          echo "✅ Autenticação configurada para ${REGISTRY_URL}"
+
+      - name: Determinar diretório do artefato
+        id: artifact_dir
+        run: |
+          # Usa o input do workflow_dispatch ou o diretório raiz
+          DIR="${{ github.event.inputs.artifact_dir || '.' }}"
+          echo "dir=${DIR}" >> $GITHUB_OUTPUT
+
+          # Verifica se aitk-artifact.json existe
+          if [ -f "${DIR}/aitk-artifact.json" ]; then
+            echo "✅ Manifesto encontrado em ${DIR}/aitk-artifact.json"
+            cat "${DIR}/aitk-artifact.json" | head -20
+          else
+            echo "❌ aitk-artifact.json não encontrado em ${DIR}"
+            exit 1
+          fi
+
+      - name: Publicar artefato
+        run: |
+          # Monta os argumentos do comando
+          ARGS="--dir ${{ steps.artifact_dir.outputs.dir }}"
+
+          # Adiciona acesso se especificado
+          ACCESS="${{ github.event.inputs.access || 'public' }}"
+          ARGS="${ARGS} --access ${ACCESS}"
+
+          # Adiciona equipe se especificada
+          TEAM="${{ github.event.inputs.team }}"
+          if [ -n "${TEAM}" ]; then
+            ARGS="${ARGS} --team ${TEAM}"
+          fi
+
+          echo "🚀 Publicando artefato..."
+          echo "   Diretório: ${{ steps.artifact_dir.outputs.dir }}"
+          echo "   Acesso: ${ACCESS}"
+          echo "   Argumentos: ${ARGS}"
+          echo ""
+
+          # Executa a publicação via CLI
+          node packages/cli/dist/bin/aitk.js publish ${ARGS}
+
+      - name: Resumo da publicação
+        if: success()
+        run: |
+          DIR="${{ steps.artifact_dir.outputs.dir }}"
+          if [ -f "${DIR}/aitk-artifact.json" ]; then
+            SCOPE=$(cat "${DIR}/aitk-artifact.json" | node -e "process.stdin.on('data',d=>{const j=JSON.parse(d);console.log(j.scope+'/'+j.name+'@'+j.version)})")
+            echo "## ✅ Artefato publicado com sucesso!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Artefato:** \`${SCOPE}\`" >> $GITHUB_STEP_SUMMARY
+            echo "**Trigger:** \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "**Ref:** \`${{ github.ref }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Instalar" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+            echo "aitk install ${SCOPE}" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Falha na publicação
+        if: failure()
+        run: |
+          echo "## ❌ Falha na publicação" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Verifique os logs acima para detalhes do erro." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Possíveis causas:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Token de API inválido ou expirado (secret \`AITK_API_TOKEN\`)" >> $GITHUB_STEP_SUMMARY
+          echo "- Manifesto \`aitk-artifact.json\` inválido" >> $GITHUB_STEP_SUMMARY
+          echo "- Versão já publicada no registry" >> $GITHUB_STEP_SUMMARY
+          echo "- Arquivos listados no manifesto não encontrados" >> $GITHUB_STEP_SUMMARY

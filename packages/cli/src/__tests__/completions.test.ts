@@ -18,8 +18,8 @@ describe('completions command', () => {
 
   it('deve ter acao definida', () => {
     // Verifica que o comando tem um action handler
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const listeners = (completionsCommand as any)._actionHandler;
+    const cmd = completionsCommand as unknown as { _actionHandler: unknown };
+    const listeners = cmd._actionHandler;
     expect(listeners).toBeDefined();
   });
 });

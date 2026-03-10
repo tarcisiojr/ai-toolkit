@@ -292,7 +292,21 @@
     "cliUpdate": "Update installed artifacts.",
     "cliTeam": "Manage teams.",
     "cliInstallTitle": "Quick start",
-    "completionsTitle": "Shell Autocompletion"
+    "completionsTitle": "Shell Autocompletion",
+    "cicdTitle": "CI/CD — GitHub Action",
+    "cicdDesc": "Automate artifact publishing with the reusable GitHub Action.",
+    "cicdUsage": "Workflow usage",
+    "cicdInputToken": "API token (required). Generate at Dashboard → API Tokens.",
+    "cicdInputDir": "Directory containing aitk-artifact.json.",
+    "cicdInputAccess": "Artifact visibility (public, private, team).",
+    "cicdInputTeam": "Team slug (required for access=team).",
+    "cicdInputRegistry": "Registry URL (default: https://aitk.dev).",
+    "cicdOutputSlug": "Full slug of published artifact (scope/name@version).",
+    "cicdSetup": "Setup",
+    "cicdStep1": "Generate an API Token in the Dashboard",
+    "cicdStep2": "Add it as AITK_API_TOKEN secret in your repository",
+    "cicdStep3": "Create aitk-artifact.json in your artifact root",
+    "cicdStep4": "Add the workflow to your repository"
   },
   "UserProfile": {
     "artifacts": "Artifacts",

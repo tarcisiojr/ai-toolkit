@@ -1,0 +1,158 @@
+# Action reutilizável para publicar artefatos no registry do ai-toolkit.
+#
+# Uso em repositórios externos:
+#
+#   - name: Publicar no ai-toolkit
+#     uses: tarcisiojr/ai-toolkit/.github/actions/aitk-publish@main
+#     with:
+#       api-token: ${{ secrets.AITK_API_TOKEN }}
+#       directory: './my-skill'
+#
+name: 'aitk publish'
+description: 'Publica um artefato no registry do ai-toolkit (skills, MCPs, templates, configs, hooks)'
+
+branding:
+  icon: 'upload-cloud'
+  color: 'purple'
+
+inputs:
+  api-token:
+    description: 'Token de API do ai-toolkit (obtenha em aitk.dev/dashboard → API Tokens)'
+    required: true
+
+  directory:
+    description: 'Diretório contendo o aitk-artifact.json (relativo à raiz do repositório)'
+    required: false
+    default: '.'
+
+  access:
+    description: 'Visibilidade do artefato: public, private ou team'
+    required: false
+    default: 'public'
+
+  team:
+    description: 'Slug da equipe (necessário apenas para access=team)'
+    required: false
+    default: ''
+
+  registry-url:
+    description: 'URL do registry (padrão: https://aitk.dev)'
+    required: false
+    default: 'https://aitk.dev'
+
+  node-version:
+    description: 'Versão do Node.js a utilizar'
+    required: false
+    default: '20'
+
+outputs:
+  artifact-scope:
+    description: 'Scope do artefato publicado'
+    value: ${{ steps.manifest.outputs.scope }}
+
+  artifact-name:
+    description: 'Nome do artefato publicado'
+    value: ${{ steps.manifest.outputs.name }}
+
+  artifact-version:
+    description: 'Versão do artefato publicado'
+    value: ${{ steps.manifest.outputs.version }}
+
+  artifact-slug:
+    description: 'Slug completo (scope/name@version)'
+    value: ${{ steps.manifest.outputs.slug }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Instalar ai-toolkit CLI
+      shell: bash
+      run: |
+        # Clona e builda o CLI do ai-toolkit
+        AITK_DIR="${RUNNER_TEMP}/ai-toolkit"
+
+        if [ ! -d "${AITK_DIR}" ]; then
+          git clone --depth 1 https://github.com/tarcisiojr/ai-toolkit.git "${AITK_DIR}"
+          cd "${AITK_DIR}"
+          npm ci --ignore-scripts
+          npx turbo run build --filter=@ai-toolkit/cli
+        fi
+
+        # Adiciona o CLI ao PATH
+        echo "${AITK_DIR}/packages/cli/dist/bin" >> $GITHUB_PATH
+
+        # Cria alias global
+        chmod +x "${AITK_DIR}/packages/cli/dist/bin/aitk.js"
+
+        echo "✅ ai-toolkit CLI instalado"
+
+    - name: Configurar autenticação
+      shell: bash
+      run: |
+        mkdir -p ~/.aitk
+
+        # Token de autenticação
+        echo '{"token":"${{ inputs.api-token }}","username":"github-action"}' > ~/.aitk/auth.json
+
+        # Configuração do registry
+        echo '{"registry":"${{ inputs.registry-url }}","defaultTool":"claude-code"}' > ~/.aitk/config.json
+
+        echo "✅ Autenticação configurada para ${{ inputs.registry-url }}"
+
+    - name: Validar manifesto
+      id: manifest
+      shell: bash
+      run: |
+        DIR="${{ inputs.directory }}"
+        MANIFEST="${DIR}/aitk-artifact.json"
+
+        if [ ! -f "${MANIFEST}" ]; then
+          echo "❌ aitk-artifact.json não encontrado em ${DIR}"
+          echo "   Certifique-se de que o diretório contém um manifesto válido."
+          exit 1
+        fi
+
+        # Extrai informações do manifesto
+        SCOPE=$(node -e "const m=require('./${MANIFEST}');console.log(m.scope)")
+        NAME=$(node -e "const m=require('./${MANIFEST}');console.log(m.name)")
+        VERSION=$(node -e "const m=require('./${MANIFEST}');console.log(m.version)")
+        TYPE=$(node -e "const m=require('./${MANIFEST}');console.log(m.type)")
+
+        echo "scope=${SCOPE}" >> $GITHUB_OUTPUT
+        echo "name=${NAME}" >> $GITHUB_OUTPUT
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "slug=${SCOPE}/${NAME}@${VERSION}" >> $GITHUB_OUTPUT
+
+        echo "📦 Artefato: ${SCOPE}/${NAME}@${VERSION} (${TYPE})"
+
+    - name: Publicar artefato
+      shell: bash
+      run: |
+        AITK_DIR="${RUNNER_TEMP}/ai-toolkit"
+
+        # Monta argumentos
+        ARGS="--dir ${{ inputs.directory }} --access ${{ inputs.access }}"
+
+        if [ -n "${{ inputs.team }}" ]; then
+          ARGS="${ARGS} --team ${{ inputs.team }}"
+        fi
+
+        echo "🚀 Publicando ${{ steps.manifest.outputs.slug }}..."
+
+        # Executa publicação
+        node "${AITK_DIR}/packages/cli/dist/bin/aitk.js" publish ${ARGS}
+
+        echo "✅ Artefato publicado com sucesso!"
+
+    - name: Limpar credenciais
+      if: always()
+      shell: bash
+      run: |
+        # Remove credenciais por segurança
+        rm -f ~/.aitk/auth.json
+        echo "🧹 Credenciais removidas"
