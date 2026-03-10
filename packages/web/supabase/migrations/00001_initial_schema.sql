@@ -31,10 +31,12 @@ CREATE TABLE profiles (
 CREATE UNIQUE INDEX idx_profiles_username ON profiles(username);
 
 -- Trigger para criar perfil automaticamente ao registrar usuário
-CREATE OR REPLACE FUNCTION handle_new_user()
+-- Nota: SET search_path = public é necessário para que a função
+-- encontre a tabela profiles quando executada pelo trigger do auth.users
+CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO profiles (id, username, display_name, avatar_url)
+  INSERT INTO public.profiles (id, username, display_name, avatar_url)
   VALUES (
     NEW.id,
     COALESCE(
@@ -46,7 +48,7 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users

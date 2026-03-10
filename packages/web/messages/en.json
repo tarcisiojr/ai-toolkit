@@ -2,7 +2,9 @@
   "Header": {
     "explore": "Explore",
     "docs": "Docs",
-    "login": "Sign In"
+    "login": "Sign In",
+    "dashboard": "Dashboard",
+    "signOut": "Sign Out"
   },
   "Footer": {
     "openSource": "open source"
