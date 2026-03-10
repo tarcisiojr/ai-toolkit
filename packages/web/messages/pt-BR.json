@@ -61,7 +61,14 @@
     "emptyTitle": "Nenhum artefato publicado ainda.",
     "emptySubtitle": "Seja o primeiro a publicar!",
     "publishButton": "Publicar Artefato",
-    "searchResults": "{count, plural, =0 {Nenhum resultado} one {1 resultado} other {{count} resultados}} para \"{query}\""
+    "searchResults": "{count, plural, =0 {Nenhum resultado} one {1 resultado} other {{count} resultados}} para \"{query}\"",
+    "trending": "Populares",
+    "recentlyPublished": "Recém publicados",
+    "recentlyUpdated": "Atualizados recentemente",
+    "sortBy": "Ordenar por",
+    "sortPopular": "Populares",
+    "sortRecent": "Recentes",
+    "sortUpdated": "Atualizados"
   },
   "Dashboard": {
     "title": "Dashboard",

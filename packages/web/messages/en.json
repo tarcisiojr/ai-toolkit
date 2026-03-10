@@ -61,7 +61,14 @@
     "emptyTitle": "No artifacts published yet.",
     "emptySubtitle": "Be the first to publish!",
     "publishButton": "Publish Artifact",
-    "searchResults": "{count, plural, =0 {No results} one {1 result} other {{count} results}} for \"{query}\""
+    "searchResults": "{count, plural, =0 {No results} one {1 result} other {{count} results}} for \"{query}\"",
+    "trending": "Trending",
+    "recentlyPublished": "Recently Published",
+    "recentlyUpdated": "Recently Updated",
+    "sortBy": "Sort by",
+    "sortPopular": "Popular",
+    "sortRecent": "Recent",
+    "sortUpdated": "Updated"
   },
   "Dashboard": {
     "title": "Dashboard",
