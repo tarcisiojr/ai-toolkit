@@ -1,8 +1,8 @@
 {
   "name": "@ai-toolkit/shared",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
+  "description": "Tipos e validadores compartilhados do AI Toolkit — registry de artefatos para AI coding tools.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -11,12 +11,40 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "!dist/__tests__",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tarcisiojr/ai-toolkit",
+    "directory": "packages/shared"
+  },
+  "homepage": "https://github.com/tarcisiojr/ai-toolkit#readme",
+  "bugs": {
+    "url": "https://github.com/tarcisiojr/ai-toolkit/issues"
+  },
+  "license": "MIT",
+  "keywords": [
+    "ai-toolkit",
+    "ai",
+    "coding-tools",
+    "types",
+    "validators",
+    "shared"
+  ],
+  "author": "tarcisiojr",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "eslint src/",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "zod": "^3.24.2"

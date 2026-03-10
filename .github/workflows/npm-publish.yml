@@ -1,0 +1,208 @@
+name: Publish to npm
+
+# Publica os pacotes @ai-toolkit/shared e @ai-toolkit/cli no npm.
+# Acionado manualmente ou ao criar uma release no GitHub.
+
+on:
+  release:
+    types: [published]
+
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Pacote a publicar'
+        required: true
+        type: choice
+        options:
+          - all
+          - shared
+          - cli
+      dry_run:
+        description: 'Apenas simular (não publica de verdade)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: npm-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+  NEXT_PUBLIC_SUPABASE_URL: 'https://placeholder.supabase.co'
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: 'placeholder-key'
+  NEXT_PUBLIC_SITE_URL: 'https://aitk.dev'
+
+jobs:
+  # Validação antes de publicar
+  validate:
+    name: Validar
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build
+        run: npx turbo run build --filter=@ai-toolkit/shared --filter=@ai-toolkit/cli
+
+      - name: Lint
+        run: npx turbo run lint --filter=@ai-toolkit/shared --filter=@ai-toolkit/cli
+
+      - name: Type Check
+        run: npx turbo run type-check --filter=@ai-toolkit/shared --filter=@ai-toolkit/cli
+
+      - name: Testes
+        run: npx turbo run test --filter=@ai-toolkit/shared --filter=@ai-toolkit/cli
+
+  # Publicar shared no npm
+  publish-shared:
+    name: Publicar @ai-toolkit/shared
+    runs-on: ubuntu-latest
+    needs: validate
+    if: ${{ github.event.inputs.package == 'all' || github.event.inputs.package == 'shared' || github.event_name == 'release' }}
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build shared
+        run: npx turbo run build --filter=@ai-toolkit/shared
+
+      - name: Verificar versão
+        working-directory: packages/shared
+        run: |
+          VERSION=$(node -e "console.log(require('./package.json').version)")
+          echo "📦 @ai-toolkit/shared@${VERSION}"
+
+          # Verificar se versão já existe no npm
+          if npm view "@ai-toolkit/shared@${VERSION}" version 2>/dev/null; then
+            echo "⚠️ Versão ${VERSION} já publicada no npm. Pulando."
+            echo "SKIP_PUBLISH=true" >> $GITHUB_ENV
+          else
+            echo "✅ Versão ${VERSION} não encontrada. Será publicada."
+            echo "SKIP_PUBLISH=false" >> $GITHUB_ENV
+          fi
+
+      - name: Publicar no npm
+        if: ${{ env.SKIP_PUBLISH != 'true' && github.event.inputs.dry_run != 'true' }}
+        working-directory: packages/shared
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Dry run
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        working-directory: packages/shared
+        run: npm publish --dry-run --access public
+
+  # Publicar CLI no npm
+  publish-cli:
+    name: Publicar @ai-toolkit/cli
+    runs-on: ubuntu-latest
+    needs: [validate, publish-shared]
+    if: ${{ always() && needs.validate.result == 'success' && (github.event.inputs.package == 'all' || github.event.inputs.package == 'cli' || github.event_name == 'release') }}
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build completo (shared + cli)
+        run: npx turbo run build --filter=@ai-toolkit/cli
+
+      - name: Verificar versão
+        working-directory: packages/cli
+        run: |
+          VERSION=$(node -e "console.log(require('./package.json').version)")
+          echo "📦 @ai-toolkit/cli@${VERSION}"
+
+          # Verificar se versão já existe no npm
+          if npm view "@ai-toolkit/cli@${VERSION}" version 2>/dev/null; then
+            echo "⚠️ Versão ${VERSION} já publicada no npm. Pulando."
+            echo "SKIP_PUBLISH=true" >> $GITHUB_ENV
+          else
+            echo "✅ Versão ${VERSION} não encontrada. Será publicada."
+            echo "SKIP_PUBLISH=false" >> $GITHUB_ENV
+          fi
+
+      - name: Publicar no npm
+        if: ${{ env.SKIP_PUBLISH != 'true' && github.event.inputs.dry_run != 'true' }}
+        working-directory: packages/cli
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Dry run
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        working-directory: packages/cli
+        run: npm publish --dry-run --access public
+
+  # Resumo
+  summary:
+    name: Resumo
+    runs-on: ubuntu-latest
+    needs: [publish-shared, publish-cli]
+    if: always()
+    steps:
+      - name: Gerar resumo
+        run: |
+          echo "## 📦 Publicação no npm" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.publish-shared.result }}" == "success" ]; then
+            echo "- ✅ @ai-toolkit/shared publicado" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.publish-shared.result }}" == "skipped" ]; then
+            echo "- ⏭️ @ai-toolkit/shared pulado" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ @ai-toolkit/shared falhou" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.publish-cli.result }}" == "success" ]; then
+            echo "- ✅ @ai-toolkit/cli publicado" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.publish-cli.result }}" == "skipped" ]; then
+            echo "- ⏭️ @ai-toolkit/cli pulado" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ @ai-toolkit/cli falhou" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Instalar" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npx @ai-toolkit/cli login" >> $GITHUB_STEP_SUMMARY
+          echo "npx @ai-toolkit/cli search \"query\"" >> $GITHUB_STEP_SUMMARY
+          echo "npx @ai-toolkit/cli install scope/name" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

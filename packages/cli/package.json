@@ -2,20 +2,56 @@
   "name": "@ai-toolkit/cli",
   "version": "0.1.0",
   "type": "module",
+  "description": "CLI para o AI Toolkit — gerenciador de pacotes para artefatos de AI coding tools (skills, MCPs, templates, configs, hooks).",
   "bin": {
     "aitk": "./dist/bin/aitk.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "!dist/__tests__",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tarcisiojr/ai-toolkit",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/tarcisiojr/ai-toolkit#readme",
+  "bugs": {
+    "url": "https://github.com/tarcisiojr/ai-toolkit/issues"
+  },
+  "license": "MIT",
+  "keywords": [
+    "ai-toolkit",
+    "aitk",
+    "ai",
+    "coding-tools",
+    "claude-code",
+    "opencode",
+    "gemini-cli",
+    "skills",
+    "mcp",
+    "templates",
+    "cli",
+    "registry",
+    "package-manager"
+  ],
+  "author": "tarcisiojr",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "eslint src/",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@ai-toolkit/shared": "*",
+    "@ai-toolkit/shared": "0.1.0",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "inquirer": "^12.4.2",
