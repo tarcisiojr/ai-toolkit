@@ -53,12 +53,18 @@ function LoginContent() {
   async function handleGitHubLogin() {
     setIsLoading(true);
     setHasError(false);
+
+    // Salvar destino pós-login em cookie (evita query params no redirect_to do Supabase,
+    // que pode causar incompatibilidade com a whitelist de redirect URLs)
+    const nextPath = `/${locale}/dashboard`;
+    document.cookie = `aitk-auth-next=${encodeURIComponent(nextPath)}; path=/; max-age=600; SameSite=Lax`;
+
     const supabase = createClient();
 
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=/${locale}/dashboard`,
+        redirectTo: `${window.location.origin}/api/auth/callback`,
       },
     });
 

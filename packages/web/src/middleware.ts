@@ -11,12 +11,28 @@ const intlMiddleware = createIntlMiddleware(routing);
 
 /**
  * Middleware principal que combina i18n + Supabase Auth.
- * 1. Atualiza a sessão do Supabase (refresh token se necessário)
- * 2. Verifica se a rota exige autenticação
- * 3. Redireciona para login se não autenticado em rota protegida
- * 4. Aplica o middleware de i18n
+ * 1. Intercepta auth code na URL raiz (fallback do Supabase)
+ * 2. Atualiza a sessão do Supabase (refresh token se necessário)
+ * 3. Verifica se a rota exige autenticação
+ * 4. Redireciona para login se não autenticado em rota protegida
+ * 5. Aplica o middleware de i18n
  */
 export async function middleware(request: NextRequest) {
+  const { pathname, searchParams, origin } = request.nextUrl;
+
+  // INTERCEPTAR: Se a URL raiz (/ ou /pt-BR ou /en) receber ?code=xxx,
+  // é o Supabase fazendo fallback para o Site URL em vez do redirect_to.
+  // Redirecionar para o callback handler correto.
+  const authCode = searchParams.get('code');
+  const isRootPath = pathname === '/' || /^\/(pt-BR|en)\/?$/.test(pathname);
+
+  if (isRootPath && authCode && authCode.length > 10) {
+    console.log(`[middleware] Auth code detectado na raiz. Redirecionando para /api/auth/callback`);
+    const callbackUrl = new URL('/api/auth/callback', origin);
+    callbackUrl.searchParams.set('code', authCode);
+    return NextResponse.redirect(callbackUrl);
+  }
+
   // Primeiro, aplica o middleware de i18n para obter a response base
   const intlResponse = intlMiddleware(request);
 
@@ -59,8 +75,6 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   // Verificar se é rota protegida
-  const { pathname } = request.nextUrl;
-
   // Extrair locale e path sem locale para checagem
   const localeMatch = pathname.match(/^\/(pt-BR|en)(\/.*)?$/);
   const pathWithoutLocale = localeMatch ? (localeMatch[2] || '/') : pathname;
