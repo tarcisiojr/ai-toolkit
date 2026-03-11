@@ -17,7 +17,7 @@ branding:
 
 inputs:
   api-token:
-    description: 'Token de API do ai-toolkit (obtenha em aitk.dev/dashboard → API Tokens)'
+    description: 'Token de API do ai-toolkit (obtenha em ai-toolkit-henna.vercel.app/dashboard → API Tokens)'
     required: true
 
   directory:
@@ -36,9 +36,9 @@ inputs:
     default: ''
 
   registry-url:
-    description: 'URL do registry (padrão: https://aitk.dev)'
+    description: 'URL do registry (padrão: https://ai-toolkit-henna.vercel.app)'
     required: false
-    default: 'https://aitk.dev'
+    default: 'https://ai-toolkit-henna.vercel.app'
 
   node-version:
     description: 'Versão do Node.js a utilizar'

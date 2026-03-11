@@ -17,7 +17,7 @@ export interface CliConfig {
 
 /** Configuração padrão */
 const DEFAULT_CONFIG: CliConfig = {
-  registry: 'https://aitk.dev',
+  registry: 'https://ai-toolkit-henna.vercel.app',
   defaultTool: 'claude-code',
   cacheDir: join(CONFIG_DIR, 'cache'),
   cacheMaxSize: '500MB',

@@ -33,9 +33,9 @@ on:
         description: 'Slug da equipe (necessário apenas para access=team)'
         required: false
       registry_url:
-        description: 'URL do registry (padrão: https://aitk.dev)'
+        description: 'URL do registry (padrão: https://ai-toolkit-henna.vercel.app)'
         required: false
-        default: 'https://aitk.dev'
+        default: 'https://ai-toolkit-henna.vercel.app'
       dry_run:
         description: 'Executar sem publicar (apenas validar)'
         required: false
@@ -117,7 +117,7 @@ jobs:
           echo '{"token":"${{ secrets.AITK_API_TOKEN }}","username":"ci-publisher"}' > ~/.aitk/auth.json
 
           # Configura registry (se URL customizada for fornecida)
-          REGISTRY_URL="${{ github.event.inputs.registry_url || 'https://aitk.dev' }}"
+          REGISTRY_URL="${{ github.event.inputs.registry_url || 'https://ai-toolkit-henna.vercel.app' }}"
           echo "{\"registry\":\"${REGISTRY_URL}\",\"defaultTool\":\"claude-code\"}" > ~/.aitk/config.json
 
           echo "✅ Autenticação configurada para ${REGISTRY_URL}"

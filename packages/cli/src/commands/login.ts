@@ -216,12 +216,13 @@ function waitForOAuthCallback(): Promise<OAuthTokens> {
       const authUrl =
         `${SUPABASE_URL}/auth/v1/authorize?provider=github&redirect_to=${encodeURIComponent(redirectUrl)}`;
 
-      logger.print(`  ${logger.stepIndicator(1, 3)} ${chalk.gray('Abrindo navegador para autenticacao...')}`);
+      logger.print(`  ${logger.stepIndicator(1, 3)} ${chalk.gray('Abrindo navegador para autenticacao via GitHub...')}`);
       logger.blank();
 
       // URL para cópia manual caso o navegador não abra
       const urlBox = logger.box([
-        chalk.gray('Se o navegador nao abrir, copie e cole o link:'),
+        chalk.gray('Voce sera redirecionado para o GitHub para autorizar o acesso.'),
+        chalk.gray('Se o navegador nao abrir, copie e cole o link abaixo:'),
         '',
         chalk.cyan.underline(authUrl),
       ]);

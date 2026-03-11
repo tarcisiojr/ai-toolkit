@@ -1,6 +1,6 @@
 # @tarcisiojunior/shared
 
-Shared types, validators and constants for the [AI Toolkit](https://aitk.dev) ecosystem.
+Shared types, validators and constants for the [AI Toolkit](https://ai-toolkit-henna.vercel.app) ecosystem.
 
 ## Overview
 
@@ -38,7 +38,7 @@ console.log(TOOL_TARGETS);   // ['claude-code', 'opencode', 'gemini-cli', ...]
 ## Links
 
 - **AI Toolkit CLI**: [npmjs.com/package/aitk-cli](https://www.npmjs.com/package/aitk-cli)
-- **Registry**: [aitk.dev](https://aitk.dev)
+- **Registry**: [ai-toolkit-henna.vercel.app](https://ai-toolkit-henna.vercel.app)
 - **GitHub**: [github.com/tarcisiojr/ai-toolkit](https://github.com/tarcisiojr/ai-toolkit)
 
 ## License

@@ -117,7 +117,7 @@ program.configureHelp({
     output.push('');
 
     // Link
-    output.push(`  ${chalk.gray('Documentacao:')} ${chalk.cyan.underline('https://aitk.dev/docs')}`);
+    output.push(`  ${chalk.gray('Documentacao:')} ${chalk.cyan.underline('https://ai-toolkit-henna.vercel.app/docs')}`);
     output.push('');
 
     return output.join('\n');

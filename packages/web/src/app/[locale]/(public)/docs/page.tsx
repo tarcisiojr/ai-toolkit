@@ -236,7 +236,7 @@ export default async function DocsPage({
             <span className="terminal-title">api</span>
           </div>
           <div className="terminal-body">
-            <span className="terminal-arg">https://aitk.dev/api/v1</span>
+            <span className="terminal-arg">https://ai-toolkit-henna.vercel.app/api/v1</span>
           </div>
         </div>
       </div>

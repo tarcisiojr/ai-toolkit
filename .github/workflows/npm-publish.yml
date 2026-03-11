@@ -31,7 +31,7 @@ env:
   NODE_VERSION: '20'
   NEXT_PUBLIC_SUPABASE_URL: 'https://placeholder.supabase.co'
   NEXT_PUBLIC_SUPABASE_ANON_KEY: 'placeholder-key'
-  NEXT_PUBLIC_SITE_URL: 'https://aitk.dev'
+  NEXT_PUBLIC_SITE_URL: 'https://ai-toolkit-henna.vercel.app'
 
 jobs:
   # Validação antes de publicar

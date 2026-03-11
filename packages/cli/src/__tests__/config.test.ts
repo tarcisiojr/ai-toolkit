@@ -29,7 +29,7 @@ describe('getConfig', () => {
 
     const config = getConfig();
 
-    expect(config.registry).toBe('https://aitk.dev');
+    expect(config.registry).toBe('https://ai-toolkit-henna.vercel.app');
     expect(config.defaultTool).toBe('claude-code');
     expect(config.cacheMaxSize).toBe('500MB');
   });
@@ -55,7 +55,7 @@ describe('getConfig', () => {
 
     const config = getConfig();
 
-    expect(config.registry).toBe('https://aitk.dev');
+    expect(config.registry).toBe('https://ai-toolkit-henna.vercel.app');
     expect(config.defaultTool).toBe('claude-code');
   });
 });
@@ -68,7 +68,7 @@ describe('saveConfig', () => {
   it('salva configuração parcial mesclando com existente', () => {
     vi.mocked(existsSync).mockReturnValue(true);
     vi.mocked(readFileSync).mockReturnValue(JSON.stringify({
-      registry: 'https://aitk.dev',
+      registry: 'https://ai-toolkit-henna.vercel.app',
       defaultTool: 'claude-code',
       cacheMaxSize: '500MB',
     }));
@@ -79,6 +79,6 @@ describe('saveConfig', () => {
     const savedContent = vi.mocked(writeFileSync).mock.calls[0][1] as string;
     const saved = JSON.parse(savedContent);
     expect(saved.defaultTool).toBe('opencode');
-    expect(saved.registry).toBe('https://aitk.dev');
+    expect(saved.registry).toBe('https://ai-toolkit-henna.vercel.app');
   });
 });

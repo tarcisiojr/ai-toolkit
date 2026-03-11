@@ -54,7 +54,7 @@ export default async function HomePage({
               <div className="mt-1">
                 <span className="terminal-prompt">$ </span>
                 <span className="terminal-command">npx</span>{' '}
-                <span className="terminal-flag">aitk</span>{' '}
+                <span className="terminal-flag">aitk-cli</span>{' '}
                 <span className="terminal-command">install</span>{' '}
                 <span className="terminal-arg">{t('terminalArg')}</span>
               </div>
@@ -317,7 +317,7 @@ export default async function HomePage({
         <div className="mx-auto mt-8 max-w-md">
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-left font-[family-name:var(--font-jetbrains)] text-sm">
             <span className="text-[#00ff88]">$ </span>
-            <span className="text-[#e2e8f0]">npx aitk</span>{' '}
+            <span className="text-[#e2e8f0]">npx aitk-cli</span>{' '}
             <span className="text-[#00d4ff]">explore</span>
           </div>
         </div>

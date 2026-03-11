@@ -169,7 +169,7 @@ export default async function ArtifactDetailPage({ params }: Props) {
               <div className="terminal-body">
                 <div>
                   <span className="terminal-prompt">$ </span>
-                  <span className="terminal-command">npx aitk</span>{' '}
+                  <span className="terminal-command">npx aitk-cli</span>{' '}
                   <span className="terminal-flag">install</span>{' '}
                   <span className="terminal-arg">
                     {artifact.scope}/{artifact.name}

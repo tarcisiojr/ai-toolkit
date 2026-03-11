@@ -17,16 +17,16 @@ AI Toolkit is an open-source package manager for sharing and installing **skills
 
 ```bash
 # Search for artifacts
-npx aitk search code-review
+npx aitk-cli search code-review
 
 # Install an artifact
-npx aitk install @user/skill-name
+npx aitk-cli install @user/skill-name
 
 # Authenticate
-npx aitk login
+npx aitk-cli login
 
 # Publish your own artifact
-npx aitk publish
+npx aitk-cli publish
 ```
 
 ## Artifact Types
@@ -163,16 +163,16 @@ AI Toolkit e um gerenciador de pacotes open-source para compartilhar e instalar 
 
 ```bash
 # Buscar artefatos
-npx aitk search code-review
+npx aitk-cli search code-review
 
 # Instalar um artefato
-npx aitk install @user/skill-name
+npx aitk-cli install @user/skill-name
 
 # Autenticar
-npx aitk login
+npx aitk-cli login
 
 # Publicar seu artefato
-npx aitk publish
+npx aitk-cli publish
 ```
 
 ## Tipos de Artefatos

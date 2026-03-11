@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://aitk.dev/logo.svg" alt="AI Toolkit" width="80" />
+  <img src="https://ai-toolkit-henna.vercel.app/logo.svg" alt="AI Toolkit" width="80" />
 </p>
 
 <h1 align="center">aitk-cli</h1>
@@ -137,8 +137,8 @@ aitk completions fish | source
 
 ## Links
 
-- **Registry**: [aitk.dev](https://aitk.dev)
-- **Documentation**: [aitk.dev/docs](https://aitk.dev/docs)
+- **Registry**: [ai-toolkit-henna.vercel.app](https://ai-toolkit-henna.vercel.app)
+- **Documentation**: [ai-toolkit-henna.vercel.app/docs](https://ai-toolkit-henna.vercel.app/docs)
 - **GitHub**: [github.com/tarcisiojr/ai-toolkit](https://github.com/tarcisiojr/ai-toolkit)
 - **Issues**: [github.com/tarcisiojr/ai-toolkit/issues](https://github.com/tarcisiojr/ai-toolkit/issues)
 

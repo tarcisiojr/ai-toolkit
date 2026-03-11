@@ -5,7 +5,7 @@ import { logger } from '../utils/logger.js';
 
 /** Chaves configuráveis e suas descrições */
 const CONFIG_KEYS: Record<string, string> = {
-  registry: 'URL do registry (ex: https://aitk.dev)',
+  registry: 'URL do registry (ex: https://ai-toolkit-henna.vercel.app)',
   defaultScope: 'Scope padrão para publicação',
   defaultTool: 'Ferramenta alvo padrão (claude-code, opencode, gemini-cli)',
   cacheDir: 'Diretório do cache local',
@@ -99,7 +99,7 @@ configCommand
   .action((key?: string) => {
     // Importar default config
     const defaults: CliConfig = {
-      registry: 'https://aitk.dev',
+      registry: 'https://ai-toolkit-henna.vercel.app',
       defaultTool: 'claude-code',
       cacheDir: '',
       cacheMaxSize: '500MB',
