@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import VersionBumpModal from './VersionBumpModal';
 
 interface OwnerActionsProps {
   artifactScope: string;
@@ -23,6 +24,13 @@ export default function OwnerActions({
 }: OwnerActionsProps) {
   const [showUpload, setShowUpload] = useState(false);
 
+  const handleSuccess = useCallback((newVersion: string) => {
+    setShowUpload(false);
+    onNewVersion?.();
+    // Recarrega a página para exibir a nova versão
+    window.location.reload();
+  }, [onNewVersion]);
+
   return (
     <div className="flex items-center gap-3">
       <button
@@ -36,6 +44,17 @@ export default function OwnerActions({
         <span className="font-[family-name:var(--font-jetbrains)] text-xs text-[#64748b]">
           Última: v{latestVersion}
         </span>
+      )}
+
+      {showUpload && (
+        <VersionBumpModal
+          currentVersion={latestVersion || '0.0.0'}
+          artifactScope={artifactScope}
+          artifactName={artifactName}
+          mode="upload"
+          onClose={() => setShowUpload(false)}
+          onSuccess={handleSuccess}
+        />
       )}
     </div>
   );
