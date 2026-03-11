@@ -158,7 +158,7 @@ function PublishContent() {
       }
 
       // Redireciona para a pagina do artefato
-      router.push(`/${locale}/${scope}/${name.trim()}`);
+      router.push(`/${locale}/a/${scope}/${name.trim()}`);
     } catch {
       setError(t('errorGeneric'));
     } finally {
