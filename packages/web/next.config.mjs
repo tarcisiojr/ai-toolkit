@@ -1,7 +1,7 @@
-import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   transpilePackages: ['@tarcisiojunior/shared'],
   images: {
     remotePatterns: [
