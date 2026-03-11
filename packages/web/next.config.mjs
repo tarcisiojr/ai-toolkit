@@ -1,3 +1,4 @@
+// @ts-check
 import createNextIntlPlugin from 'next-intl/plugin';
 
 /** @type {import('next').NextConfig} */
