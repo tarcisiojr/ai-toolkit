@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npx turbo run build --filter=@tarcisiojunior/web",
+  "buildCommand": "npx turbo run build --filter=@tarcisiojunior/web && echo '{\"version\":3,\"outDirectory\":\"out\"}' > packages/web/.next/export-detail.json",
   "outputDirectory": "packages/web/.next",
   "framework": "nextjs",
   "installCommand": "npm install --include=optional"
