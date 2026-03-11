@@ -10,7 +10,6 @@
     "openSource": "open source"
   },
   "Home": {
-    "badge": "v0.3.0 — beta",
     "title": "The artifact registry for",
     "titleHighlight": "AI coding tools",
     "subtitle": "Discover, share and manage skills, MCPs, templates and configurations for your AI tools.",

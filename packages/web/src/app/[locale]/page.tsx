@@ -17,7 +17,7 @@ export default async function HomePage({
         <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.03] px-4 py-1.5">
           <span className="inline-block h-2 w-2 rounded-full bg-[#00ff88] shadow-[0_0_6px_rgba(0,255,136,0.5)]" />
           <span className="font-[family-name:var(--font-jetbrains)] text-xs text-[#94a3b8]">
-            {t('badge')}
+            v{process.env.NEXT_PUBLIC_APP_VERSION} — beta
           </span>
         </div>
 
