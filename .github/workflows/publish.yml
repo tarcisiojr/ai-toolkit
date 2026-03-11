@@ -102,7 +102,7 @@ jobs:
         run: npm ci
 
       - name: Build CLI
-        run: npx turbo run build --filter=aitoolkit
+        run: npx turbo run build --filter=aitk-cli
 
       - name: Verificar CLI
         run: |

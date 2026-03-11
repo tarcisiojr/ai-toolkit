@@ -37,7 +37,7 @@ console.log(TOOL_TARGETS);   // ['claude-code', 'opencode', 'gemini-cli', ...]
 
 ## Links
 
-- **AI Toolkit CLI**: [npmjs.com/package/aitoolkit](https://www.npmjs.com/package/aitoolkit)
+- **AI Toolkit CLI**: [npmjs.com/package/aitk-cli](https://www.npmjs.com/package/aitk-cli)
 - **Registry**: [aitk.dev](https://aitk.dev)
 - **GitHub**: [github.com/tarcisiojr/ai-toolkit](https://github.com/tarcisiojr/ai-toolkit)
 

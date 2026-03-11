@@ -1,11 +1,11 @@
 {
-  "name": "aitoolkit",
+  "name": "aitk-cli",
   "version": "0.2.0",
   "type": "module",
   "description": "Package manager for AI coding tools — install and share skills, MCPs, templates, configs and hooks for Claude Code, OpenCode, Gemini CLI and more.",
   "bin": {
     "aitk": "./dist/bin/aitk.js",
-    "aitoolkit": "./dist/bin/aitk.js"
+    "aitk-cli": "./dist/bin/aitk.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
