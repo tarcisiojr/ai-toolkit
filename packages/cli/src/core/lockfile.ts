@@ -5,7 +5,7 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import type { LockFile, LockEntry } from '@tarcisiojr/shared';
+import type { LockFile, LockEntry } from '@tarcisiojunior/shared';
 
 const LOCK_FILE = 'aitk-lock.json';
 const LOCKFILE_VERSION = 1;

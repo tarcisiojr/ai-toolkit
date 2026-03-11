@@ -4,7 +4,7 @@ import ora from 'ora';
 import { createApiClient } from '../core/api-client.js';
 import { getAuth } from '../core/auth.js';
 import { logger } from '../utils/logger.js';
-import type { ApiResponse, Team, TeamMember } from '@tarcisiojr/shared';
+import type { ApiResponse, Team, TeamMember } from '@tarcisiojunior/shared';
 
 /** Resposta do endpoint de teams do usuário */
 interface TeamMembershipResponse {

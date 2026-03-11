@@ -1,6 +1,6 @@
 name: Publish to npm
 
-# Publica os pacotes @tarcisiojr/shared e @tarcisiojr/cli no npm.
+# Publica os pacotes @tarcisiojunior/shared e @tarcisiojunior/cli no npm.
 # Acionado manualmente ou ao criar uma release no GitHub.
 
 on:
@@ -52,20 +52,20 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npx turbo run build --filter=@tarcisiojr/shared --filter=@tarcisiojr/cli
+        run: npx turbo run build --filter=@tarcisiojunior/shared --filter=@tarcisiojunior/cli
 
       - name: Lint
-        run: npx turbo run lint --filter=@tarcisiojr/shared --filter=@tarcisiojr/cli
+        run: npx turbo run lint --filter=@tarcisiojunior/shared --filter=@tarcisiojunior/cli
 
       - name: Type Check
-        run: npx turbo run type-check --filter=@tarcisiojr/shared --filter=@tarcisiojr/cli
+        run: npx turbo run type-check --filter=@tarcisiojunior/shared --filter=@tarcisiojunior/cli
 
       - name: Testes
-        run: npx turbo run test --filter=@tarcisiojr/shared --filter=@tarcisiojr/cli
+        run: npx turbo run test --filter=@tarcisiojunior/shared --filter=@tarcisiojunior/cli
 
   # Publicar shared no npm
   publish-shared:
-    name: Publicar @tarcisiojr/shared
+    name: Publicar @tarcisiojunior/shared
     runs-on: ubuntu-latest
     needs: validate
     if: |
@@ -91,16 +91,16 @@ jobs:
         run: npm ci
 
       - name: Build shared
-        run: npx turbo run build --filter=@tarcisiojr/shared
+        run: npx turbo run build --filter=@tarcisiojunior/shared
 
       - name: Verificar versão
         working-directory: packages/shared
         run: |
           VERSION=$(node -e "console.log(require('./package.json').version)")
-          echo "📦 @tarcisiojr/shared@${VERSION}"
+          echo "📦 @tarcisiojunior/shared@${VERSION}"
 
           # Verificar se versão já existe no npm
-          if npm view "@tarcisiojr/shared@${VERSION}" version 2>/dev/null; then
+          if npm view "@tarcisiojunior/shared@${VERSION}" version 2>/dev/null; then
             echo "⚠️ Versão ${VERSION} já publicada no npm. Pulando."
             echo "SKIP_PUBLISH=true" >> $GITHUB_ENV
           else
@@ -122,7 +122,7 @@ jobs:
 
   # Publicar CLI no npm
   publish-cli:
-    name: Publicar @tarcisiojr/cli
+    name: Publicar @tarcisiojunior/cli
     runs-on: ubuntu-latest
     needs: [validate, publish-shared]
     if: |
@@ -150,16 +150,16 @@ jobs:
         run: npm ci
 
       - name: Build completo (shared + cli)
-        run: npx turbo run build --filter=@tarcisiojr/cli
+        run: npx turbo run build --filter=@tarcisiojunior/cli
 
       - name: Verificar versão
         working-directory: packages/cli
         run: |
           VERSION=$(node -e "console.log(require('./package.json').version)")
-          echo "📦 @tarcisiojr/cli@${VERSION}"
+          echo "📦 @tarcisiojunior/cli@${VERSION}"
 
           # Verificar se versão já existe no npm
-          if npm view "@tarcisiojr/cli@${VERSION}" version 2>/dev/null; then
+          if npm view "@tarcisiojunior/cli@${VERSION}" version 2>/dev/null; then
             echo "⚠️ Versão ${VERSION} já publicada no npm. Pulando."
             echo "SKIP_PUBLISH=true" >> $GITHUB_ENV
           else
@@ -192,25 +192,25 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ needs.publish-shared.result }}" == "success" ]; then
-            echo "- ✅ @tarcisiojr/shared publicado" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ @tarcisiojunior/shared publicado" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.publish-shared.result }}" == "skipped" ]; then
-            echo "- ⏭️ @tarcisiojr/shared pulado" >> $GITHUB_STEP_SUMMARY
+            echo "- ⏭️ @tarcisiojunior/shared pulado" >> $GITHUB_STEP_SUMMARY
           else
-            echo "- ❌ @tarcisiojr/shared falhou" >> $GITHUB_STEP_SUMMARY
+            echo "- ❌ @tarcisiojunior/shared falhou" >> $GITHUB_STEP_SUMMARY
           fi
 
           if [ "${{ needs.publish-cli.result }}" == "success" ]; then
-            echo "- ✅ @tarcisiojr/cli publicado" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ @tarcisiojunior/cli publicado" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.publish-cli.result }}" == "skipped" ]; then
-            echo "- ⏭️ @tarcisiojr/cli pulado" >> $GITHUB_STEP_SUMMARY
+            echo "- ⏭️ @tarcisiojunior/cli pulado" >> $GITHUB_STEP_SUMMARY
           else
-            echo "- ❌ @tarcisiojr/cli falhou" >> $GITHUB_STEP_SUMMARY
+            echo "- ❌ @tarcisiojunior/cli falhou" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Instalar" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "npx @tarcisiojr/cli login" >> $GITHUB_STEP_SUMMARY
-          echo "npx @tarcisiojr/cli search \"query\"" >> $GITHUB_STEP_SUMMARY
-          echo "npx @tarcisiojr/cli install scope/name" >> $GITHUB_STEP_SUMMARY
+          echo "npx @tarcisiojunior/cli login" >> $GITHUB_STEP_SUMMARY
+          echo "npx @tarcisiojunior/cli search \"query\"" >> $GITHUB_STEP_SUMMARY
+          echo "npx @tarcisiojunior/cli install scope/name" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

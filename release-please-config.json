@@ -19,10 +19,10 @@
   ],
   "packages": {
     "packages/shared": {
-      "component": "@tarcisiojr/shared"
+      "component": "@tarcisiojunior/shared"
     },
     "packages/cli": {
-      "component": "@tarcisiojr/cli"
+      "component": "@tarcisiojunior/cli"
     }
   }
 }

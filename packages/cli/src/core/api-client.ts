@@ -1,4 +1,4 @@
-import type { Artifact, ArtifactVersion, ApiResponse, SearchParams } from '@tarcisiojr/shared';
+import type { Artifact, ArtifactVersion, ApiResponse, SearchParams } from '@tarcisiojunior/shared';
 import { getConfig } from './config.js';
 import { getAuth } from './auth.js';
 

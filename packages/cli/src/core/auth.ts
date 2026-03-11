@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, unlinkSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
-import type { CliAuth } from '@tarcisiojr/shared';
+import type { CliAuth } from '@tarcisiojunior/shared';
 
 const AUTH_FILE = join(homedir(), '.aitk', 'auth.json');
 

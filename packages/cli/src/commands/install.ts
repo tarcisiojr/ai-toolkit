@@ -5,7 +5,7 @@ import { writeFileSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execSync } from 'node:child_process';
-import type { ArtifactManifest, ToolTarget } from '@tarcisiojr/shared';
+import type { ArtifactManifest, ToolTarget } from '@tarcisiojunior/shared';
 import { createApiClient } from '../core/api-client.js';
 import {
   readManifest,

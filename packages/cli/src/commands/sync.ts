@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
-import type { ArtifactManifest, ToolTarget } from '@tarcisiojr/shared';
+import type { ArtifactManifest, ToolTarget } from '@tarcisiojunior/shared';
 import { createApiClient } from '../core/api-client.js';
 import { readManifest } from '../core/manifest.js';
 import {

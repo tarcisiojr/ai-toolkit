@@ -1,4 +1,4 @@
-import type { ArtifactManifest, ToolTarget } from '@tarcisiojr/shared';
+import type { ArtifactManifest, ToolTarget } from '@tarcisiojunior/shared';
 
 /** Resultado de uma instalação */
 export interface InstallResult {

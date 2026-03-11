@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
-import type { ArtifactManifest, ToolTarget } from '@tarcisiojr/shared';
+import type { ArtifactManifest, ToolTarget } from '@tarcisiojunior/shared';
 import { BaseInstaller, type InstallResult } from './base-installer.js';
 import { SkillInstaller } from './skill-installer.js';
 import { McpInstaller } from './mcp-installer.js';

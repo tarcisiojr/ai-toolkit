@@ -1,5 +1,5 @@
 {
-  "name": "@tarcisiojr/cli",
+  "name": "@tarcisiojunior/cli",
   "version": "0.2.0",
   "type": "module",
   "description": "CLI para o AI Toolkit — gerenciador de pacotes para artefatos de AI coding tools (skills, MCPs, templates, configs, hooks).",
@@ -51,7 +51,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@tarcisiojr/shared": "0.2.0",
+    "@tarcisiojunior/shared": "0.2.0",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "inquirer": "^12.4.2",

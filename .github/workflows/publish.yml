@@ -69,7 +69,7 @@ jobs:
         run: npm ci
 
       - name: Build shared
-        run: npx turbo run build --filter=@tarcisiojr/shared
+        run: npx turbo run build --filter=@tarcisiojunior/shared
 
       - name: Lint
         run: npx turbo run lint
@@ -102,7 +102,7 @@ jobs:
         run: npm ci
 
       - name: Build CLI
-        run: npx turbo run build --filter=@tarcisiojr/cli
+        run: npx turbo run build --filter=@tarcisiojunior/cli
 
       - name: Verificar CLI
         run: |

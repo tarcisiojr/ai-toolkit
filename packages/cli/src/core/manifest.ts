@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import type { ProjectManifest } from '@tarcisiojr/shared';
-import { projectManifestSchema } from '@tarcisiojr/shared';
+import type { ProjectManifest } from '@tarcisiojunior/shared';
+import { projectManifestSchema } from '@tarcisiojunior/shared';
 
 const MANIFEST_FILE = 'aitk.json';
 

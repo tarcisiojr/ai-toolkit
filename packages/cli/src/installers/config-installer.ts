@@ -8,8 +8,8 @@ import {
   cpSync,
   rmSync,
 } from 'node:fs';
-import type { ArtifactManifest, ToolTarget } from '@tarcisiojr/shared';
-import { TOOL_TARGET_INFO } from '@tarcisiojr/shared';
+import type { ArtifactManifest, ToolTarget } from '@tarcisiojunior/shared';
+import { TOOL_TARGET_INFO } from '@tarcisiojunior/shared';
 import { BaseInstaller, type InstallResult } from './base-installer.js';
 
 /** Verifica se um arquivo e JSON pelo conteudo */
