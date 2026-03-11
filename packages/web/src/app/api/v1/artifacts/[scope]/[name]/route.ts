@@ -61,12 +61,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const updates: Record<string, unknown> = {};
   for (const field of allowedFields) {
     if (body[field] !== undefined) {
-      // Converter camelCase para snake_case
-      const snakeField = field.replace(
-        /[A-Z]/g,
-        (c) => '_' + c.toLowerCase(),
-      );
-      updates[snakeField] = body[field];
+      // Campos já estão em snake_case
+      updates[field] = body[field];
     }
   }
 

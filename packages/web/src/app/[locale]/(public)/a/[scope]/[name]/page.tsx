@@ -1,6 +1,11 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
+import { checkOwnership } from '@/lib/artifacts/ownership';
+import OwnerActions from '@/components/artifact/OwnerActions';
+import FileBrowser from '@/components/artifact/FileBrowser';
+import VersionList from '@/components/artifact/VersionList';
+import MetadataEditor from '@/components/artifact/MetadataEditor';
 
 /* Cores e icones por tipo de artefato */
 const TYPE_CONFIG: Record<string, { color: string; icon: string; label: string }> = {
@@ -70,8 +75,33 @@ export default async function ArtifactDetailPage({ params }: Props) {
     .order('version_patch', { ascending: false })
     .limit(10);
 
+  // Detectar ownership — verificar se o usuário logado é dono do artefato
+  let isOwner = false;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    isOwner = await checkOwnership(supabase, user.id, artifact);
+  }
+
+  // Buscar arquivos da versão latest (se houver)
+  let files: Array<{ path: string; size: number; mimeType: string; isText: boolean }> = [];
+  const latestVersionRecord = versions?.[0];
+  if (latestVersionRecord) {
+    const { data: versionFiles } = await supabase
+      .from('version_files')
+      .select('file_path, file_size, mime_type, is_text')
+      .eq('version_id', latestVersionRecord.id)
+      .order('file_path', { ascending: true });
+
+    files = (versionFiles || []).map((f) => ({
+      path: f.file_path,
+      size: f.file_size,
+      mimeType: f.mime_type,
+      isText: f.is_text,
+    }));
+  }
+
   const typeConfig = TYPE_CONFIG[artifact.type] || TYPE_CONFIG.skill;
-  const latestVersion = versions?.[0];
+  const latestVersion = latestVersionRecord;
   const totalDownloads = artifact.total_downloads || 0;
 
   // Dados para o grafico de downloads semanais
@@ -150,6 +180,18 @@ export default async function ArtifactDetailPage({ params }: Props) {
                     {artifact.description}
                   </p>
                 )}
+
+                {/* Ações do owner */}
+                {isOwner && (
+                  <div className="mt-4">
+                    <OwnerActions
+                      artifactScope={artifact.scope}
+                      artifactName={artifact.name}
+                      latestVersion={artifact.latest_version}
+                      locale={locale}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -179,6 +221,20 @@ export default async function ArtifactDetailPage({ params }: Props) {
               </div>
             </div>
           </div>
+
+          {/* File Browser — árvore de arquivos da versão */}
+          {files.length > 0 && (
+            <div className="mt-6">
+              <FileBrowser
+                files={files}
+                artifactScope={artifact.scope}
+                artifactName={artifact.name}
+                version={artifact.latest_version || ''}
+                isOwner={isOwner}
+                locale={locale}
+              />
+            </div>
+          )}
 
           {/* Grafico de downloads semanais */}
           {totalDownloads > 0 && (
@@ -230,60 +286,17 @@ export default async function ArtifactDetailPage({ params }: Props) {
             </div>
           )}
 
-          {/* Lista de versoes com changelog */}
-          {versions && versions.length > 0 ? (
-            <div className="mt-6 glass rounded-2xl p-6">
-              <h3 className="mb-4 font-[family-name:var(--font-jetbrains)] text-sm font-semibold text-[#94a3b8]">
-                {t('versions')} ({versions.length})
-              </h3>
-              <div className="space-y-3">
-                {versions.map((v) => (
-                  <div
-                    key={v.id}
-                    className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="font-[family-name:var(--font-jetbrains)] text-sm font-medium text-[#e2e8f0]">
-                          v{v.version}
-                        </span>
-                        {v.version === artifact.latest_version && (
-                          <span className="rounded bg-[#00ff88]/10 px-2 py-0.5 font-[family-name:var(--font-jetbrains)] text-[10px] text-[#00ff88]">
-                            latest
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 font-[family-name:var(--font-jetbrains)] text-xs text-[#64748b]">
-                        {v.file_size && (
-                          <span>{(v.file_size / 1024).toFixed(1)} KB</span>
-                        )}
-                        <span>
-                          {new Date(v.created_at).toLocaleDateString(locale)}
-                        </span>
-                      </div>
-                    </div>
-                    {/* Changelog da versao, se disponivel */}
-                    {v.changelog && (
-                      <div className="mt-2 border-t border-white/[0.04] pt-2">
-                        <p className="font-[family-name:var(--font-jetbrains)] text-xs leading-relaxed text-[#64748b]">
-                          {v.changelog}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="mt-6 glass rounded-2xl p-6">
-              <h3 className="mb-4 font-[family-name:var(--font-jetbrains)] text-sm font-semibold text-[#94a3b8]">
-                {t('versions')}
-              </h3>
-              <p className="font-[family-name:var(--font-jetbrains)] text-sm text-[#64748b]">
-                {t('noVersions')}
-              </p>
-            </div>
-          )}
+          {/* Lista de versões com ações do owner */}
+          <div className="mt-6">
+            <VersionList
+              versions={versions || []}
+              latestVersion={artifact.latest_version}
+              artifactScope={artifact.scope}
+              artifactName={artifact.name}
+              isOwner={isOwner}
+              locale={locale}
+            />
+          </div>
         </div>
 
         {/* Sidebar com informacoes complementares */}
@@ -352,80 +365,24 @@ export default async function ArtifactDetailPage({ params }: Props) {
             </dl>
           </div>
 
-          {/* Palavras-chave do artefato */}
-          {artifact.keywords && artifact.keywords.length > 0 && (
-            <div className="glass rounded-2xl p-6">
-              <h3 className="mb-4 font-[family-name:var(--font-jetbrains)] text-sm font-semibold text-[#94a3b8]">
-                {t('keywords')}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {artifact.keywords.map((kw: string) => (
-                  <span
-                    key={kw}
-                    className="rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1 font-[family-name:var(--font-jetbrains)] text-xs text-[#94a3b8]"
-                  >
-                    {kw}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Ferramentas suportadas */}
-          {artifact.tool_targets && artifact.tool_targets.length > 0 && (
-            <div className="glass rounded-2xl p-6">
-              <h3 className="mb-4 font-[family-name:var(--font-jetbrains)] text-sm font-semibold text-[#94a3b8]">
-                {t('toolSupport')}
-              </h3>
-              <div className="space-y-2">
-                {artifact.tool_targets.map((tool: string) => (
-                  <div
-                    key={tool}
-                    className="flex items-center gap-2 font-[family-name:var(--font-jetbrains)] text-sm text-[#e2e8f0]"
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#00ff88]" />
-                    {tool}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Links externos */}
-          <div className="glass rounded-2xl p-6">
-            <h3 className="mb-4 font-[family-name:var(--font-jetbrains)] text-sm font-semibold text-[#94a3b8]">
-              {t('links')}
-            </h3>
-            <div className="space-y-2">
-              {/* Link para o perfil do autor */}
-              <a
-                href={`/${locale}/u/${artifact.scope}`}
-                className="neon-link block font-[family-name:var(--font-jetbrains)] text-sm"
-              >
-                &rarr; @{artifact.scope}
-              </a>
-              {artifact.repository && (
-                <a
-                  href={artifact.repository}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="neon-link block font-[family-name:var(--font-jetbrains)] text-sm"
-                >
-                  &rarr; {t('repository')}
-                </a>
-              )}
-              {artifact.homepage && (
-                <a
-                  href={artifact.homepage}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="neon-link block font-[family-name:var(--font-jetbrains)] text-sm"
-                >
-                  &rarr; Homepage
-                </a>
-              )}
-            </div>
-          </div>
+          {/* Metadados editáveis — keywords, tools, links */}
+          <MetadataEditor
+            artifact={{
+              id: artifact.id,
+              scope: artifact.scope,
+              name: artifact.name,
+              description: artifact.description,
+              keywords: artifact.keywords || [],
+              toolTargets: artifact.tool_targets || [],
+              license: artifact.license || '',
+              repository: artifact.repository || '',
+              homepage: artifact.homepage || '',
+              isDeprecated: artifact.is_deprecated || false,
+              deprecatedMessage: artifact.deprecated_message || '',
+            }}
+            isOwner={isOwner}
+            locale={locale}
+          />
         </div>
       </div>
     </div>
