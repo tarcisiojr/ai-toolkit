@@ -1,6 +1,6 @@
 {
   "name": "@ai-toolkit/web",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@ai-toolkit/shared": "0.1.0",
+    "@ai-toolkit/shared": "0.2.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "next": "^15.2.4",
