@@ -22,7 +22,7 @@
       "component": "@tarcisiojunior/shared"
     },
     "packages/cli": {
-      "component": "@tarcisiojunior/cli"
+      "component": "aitoolkit"
     }
   }
 }

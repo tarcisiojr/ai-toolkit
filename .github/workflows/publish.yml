@@ -102,7 +102,7 @@ jobs:
         run: npm ci
 
       - name: Build CLI
-        run: npx turbo run build --filter=@tarcisiojunior/cli
+        run: npx turbo run build --filter=aitoolkit
 
       - name: Verificar CLI
         run: |

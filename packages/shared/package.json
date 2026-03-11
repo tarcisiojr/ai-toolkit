@@ -1,8 +1,8 @@
 {
   "name": "@tarcisiojunior/shared",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
-  "description": "Tipos e validadores compartilhados do AI Toolkit — registry de artefatos para AI coding tools.",
+  "description": "Shared types, validators and constants for the AI Toolkit ecosystem — package manager for AI coding tools.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
