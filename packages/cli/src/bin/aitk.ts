@@ -17,13 +17,21 @@ import { syncCommand } from '../commands/sync.js';
 import { initCommand } from '../commands/init.js';
 import { completionsCommand } from '../commands/completions.js';
 import { logger } from '../utils/logger.js';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+/** Lê a versão do package.json para evitar hardcode */
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf-8'));
+const VERSION: string = pkg.version;
 
 const program = new Command();
 
 program
   .name('aitk')
   .description('AI Toolkit — Gerenciador de artefatos para ferramentas de AI coding')
-  .version('0.1.0');
+  .version(VERSION);
 
 program.addCommand(loginCommand);
 program.addCommand(logoutCommand);
@@ -56,7 +64,7 @@ program.configureHelp({
     }
 
     // Versao
-    output.push(`  ${chalk.gray('Versao:')} ${chalk.white.bold('v0.1.0')}`);
+    output.push(`  ${chalk.gray('Versao:')} ${chalk.white.bold(`v${VERSION}`)}`);
     output.push('');
 
     // Uso

@@ -1,6 +1,6 @@
 {
   "name": "aitk-cli",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "description": "Package manager for AI coding tools — install and share skills, MCPs, templates, configs and hooks for Claude Code, OpenCode, Gemini CLI and more.",
   "bin": {
