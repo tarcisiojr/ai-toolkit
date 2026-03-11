@@ -1,9 +1,10 @@
 // @ts-check
-import { readFileSync } from 'fs';
+import { createRequire } from 'module';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 // Ler versão do package.json automaticamente no build
-const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8'));
+const require = createRequire(import.meta.url);
+const pkg = require('./package.json');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
