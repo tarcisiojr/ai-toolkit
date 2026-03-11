@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npx turbo run build --filter=@ai-toolkit/web",
+  "buildCommand": "npx turbo run build --filter=@tarcisiojr/web",
   "outputDirectory": "packages/web/.next",
   "framework": "nextjs",
   "installCommand": "npm install"

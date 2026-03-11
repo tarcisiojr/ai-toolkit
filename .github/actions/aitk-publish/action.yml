@@ -80,7 +80,7 @@ runs:
           git clone --depth 1 https://github.com/tarcisiojr/ai-toolkit.git "${AITK_DIR}"
           cd "${AITK_DIR}"
           npm ci --ignore-scripts
-          npx turbo run build --filter=@ai-toolkit/cli
+          npx turbo run build --filter=@tarcisiojr/cli
         fi
 
         # Adiciona o CLI ao PATH

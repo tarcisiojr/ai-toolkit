@@ -1,4 +1,4 @@
-import type { ArtifactManifest, ToolTarget } from '@ai-toolkit/shared';
+import type { ArtifactManifest, ToolTarget } from '@tarcisiojr/shared';
 
 /** Resultado de uma instalação */
 export interface InstallResult {

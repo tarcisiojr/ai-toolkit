@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import type { ArtifactManifest } from '@ai-toolkit/shared';
+import type { ArtifactManifest } from '@tarcisiojr/shared';
 import { TemplateInstaller } from '../installers/template-installer.js';
 
 describe('TemplateInstaller', () => {

@@ -381,7 +381,7 @@ export default async function DocsPage({
               <div>
                 <span className="terminal-prompt">$ </span>
                 <span className="terminal-command">npx</span>{' '}
-                <span className="terminal-arg">@ai-toolkit/cli</span>{' '}
+                <span className="terminal-arg">@tarcisiojr/cli</span>{' '}
                 <span className="terminal-flag">login</span>
               </div>
             </div>

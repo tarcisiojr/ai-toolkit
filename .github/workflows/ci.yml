@@ -60,7 +60,7 @@ jobs:
         run: npm ci
 
       - name: Build shared (dependencia dos demais)
-        run: npx turbo run build --filter=@ai-toolkit/shared
+        run: npx turbo run build --filter=@tarcisiojr/shared
 
       - name: Lint
         run: npx turbo run lint

@@ -6,7 +6,7 @@ import { platform } from 'node:os';
 import { getConfig } from '../core/config.js';
 import { saveAuth, getAuth } from '../core/auth.js';
 import { logger } from '../utils/logger.js';
-import type { CliAuth } from '@ai-toolkit/shared';
+import type { CliAuth } from '@tarcisiojr/shared';
 
 // ── Constantes do Supabase ──────────────────────────────────────────────
 const SUPABASE_URL = 'https://nxdcgmpvvyfgqerenxrx.supabase.co';

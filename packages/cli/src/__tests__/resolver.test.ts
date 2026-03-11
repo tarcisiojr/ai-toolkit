@@ -12,7 +12,7 @@ import {
   isValidRange,
   compareVersions,
 } from '../core/resolver.js';
-import type { ArtifactVersion } from '@ai-toolkit/shared';
+import type { ArtifactVersion } from '@tarcisiojr/shared';
 
 /** Cria uma versão mock para testes */
 function mockVersion(version: string, isYanked = false): ArtifactVersion {

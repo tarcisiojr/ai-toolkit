@@ -19,10 +19,10 @@
   ],
   "packages": {
     "packages/shared": {
-      "component": "@ai-toolkit/shared"
+      "component": "@tarcisiojr/shared"
     },
     "packages/cli": {
-      "component": "@ai-toolkit/cli"
+      "component": "@tarcisiojr/cli"
     }
   }
 }

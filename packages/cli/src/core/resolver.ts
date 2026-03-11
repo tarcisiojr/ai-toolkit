@@ -4,7 +4,7 @@
  */
 
 import * as semver from 'semver';
-import type { ArtifactVersion } from '@ai-toolkit/shared';
+import type { ArtifactVersion } from '@tarcisiojr/shared';
 
 /** Resultado da resolução de versão */
 export interface ResolvedVersion {
