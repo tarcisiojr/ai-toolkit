@@ -34,7 +34,7 @@ jobs:
       - name: Deploy para producao
         id: deploy
         run: |
-          URL=$(vercel deploy --prod --yes --token=$VERCEL_TOKEN)
+          URL=$(vercel deploy --prod --yes --force --token=$VERCEL_TOKEN)
           echo "url=$URL" >> "$GITHUB_OUTPUT"
 
       - name: Resumo do deploy
