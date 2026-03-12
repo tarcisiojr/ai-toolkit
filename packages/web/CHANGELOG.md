@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.4](https://github.com/tarcisiojr/ai-toolkit/compare/@tarcisiojunior/web-v0.3.3...@tarcisiojunior/web-v0.3.4) (2026-03-12)
+
+
+### Correções
+
+* **login:** propagar host real de escuta do CLI ao web app via parâmetro host ([4d04018](https://github.com/tarcisiojr/ai-toolkit/commit/4d04018851c72265e719893f56a53eb3b5773850))
+* **login:** propagar host real de escuta do CLI ao web app via parâmetro host ([b20647b](https://github.com/tarcisiojr/ai-toolkit/commit/b20647b582194be3b1af22e00decc6b580f94d0a)), closes [#17](https://github.com/tarcisiojr/ai-toolkit/issues/17)
+
 ## [0.3.3](https://github.com/tarcisiojr/ai-toolkit/compare/@tarcisiojunior/web-v0.3.2...@tarcisiojunior/web-v0.3.3) (2026-03-12)
 
 
