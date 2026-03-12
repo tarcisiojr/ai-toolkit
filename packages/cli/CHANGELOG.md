@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/tarcisiojr/ai-toolkit/compare/aitk-cli-v0.2.2...aitk-cli-v0.2.3) (2026-03-12)
+
+
+### Correções
+
+* **deps:** sync @tarcisiojunior/shared to 0.2.2 and regenerate lock file ([5d01238](https://github.com/tarcisiojr/ai-toolkit/commit/5d0123824d2dafef1884b81ca3644c621fff6f2e))
+
 ## [0.2.2](https://github.com/tarcisiojr/ai-toolkit/compare/aitk-cli-v0.2.1...aitk-cli-v0.2.2) (2026-03-12)
 
 
