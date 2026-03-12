@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.2](https://github.com/tarcisiojr/ai-toolkit/compare/aitk-cli-v0.2.1...aitk-cli-v0.2.2) (2026-03-12)
+
+
+### Correções
+
+* **cli:** corrigir erro de autenticação OAuth no CLI (Issue [#6](https://github.com/tarcisiojr/ai-toolkit/issues/6)) ([5c727f5](https://github.com/tarcisiojr/ai-toolkit/commit/5c727f5ebe1db1d44ba8c7a9dec314ad94be8edd))
+* **cli:** usar dual-stack IPv4+IPv6 no servidor OAuth com fallback IPv4 ([e4c637b](https://github.com/tarcisiojr/ai-toolkit/commit/e4c637b823e01e9d51c0a2d28bc4dc9d69217d9b)), closes [#6](https://github.com/tarcisiojr/ai-toolkit/issues/6)
+
 ## [0.2.1](https://github.com/tarcisiojr/ai-toolkit/compare/aitk-cli-v0.2.0...aitk-cli-v0.2.1) (2026-03-12)
 
 
