@@ -27,6 +27,16 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Validar parâmetro host (allowlist SSRF)
+  const ALLOWED_CLI_HOSTS = new Set(['127.0.0.1', '::1']);
+  const hostRaw = searchParams.get('host') ?? '127.0.0.1'; // default retrocompatível
+  if (!ALLOWED_CLI_HOSTS.has(hostRaw)) {
+    return NextResponse.json(
+      { error: 'Parametro host invalido. Deve ser 127.0.0.1 ou ::1.' },
+      { status: 400 },
+    );
+  }
+
   // Validar parâmetro state
   const state = searchParams.get('state') ?? '';
   if (state.length < 32) {
@@ -44,7 +54,9 @@ export async function GET(request: NextRequest) {
     // Caminho rápido: usuário já autenticado — gerar token CLI diretamente
     try {
       const tokenResult = await generateCliToken(user.id);
-      const callbackUrl = `http://localhost:${port}/callback`
+      // Formatar host IPv6 com colchetes (RFC 2732)
+      const hostFormatted = hostRaw.includes(':') ? `[${hostRaw}]` : hostRaw;
+      const callbackUrl = `http://${hostFormatted}:${port}/callback`
         + `?token=${encodeURIComponent(tokenResult.token)}`
         + `&state=${encodeURIComponent(state)}`;
       return NextResponse.redirect(callbackUrl);
@@ -84,6 +96,13 @@ export async function GET(request: NextRequest) {
     maxAge: 600,
   });
   response.cookies.set('aitk-cli-state', state, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: true,
+    path: '/',
+    maxAge: 600,
+  });
+  response.cookies.set('aitk-cli-host', hostRaw, {
     httpOnly: true,
     sameSite: 'lax',
     secure: true,

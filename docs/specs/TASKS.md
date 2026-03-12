@@ -1,36 +1,30 @@
-# Tarefas de Implementação — Issue #14: Login do CLI trava quando usuário já está autenticado na web
+# Tarefas de Implementação — Issue #17: Erro no login do CLI via OAuth
 
 > **Referências:** [REQUIREMENTS.md](./REQUIREMENTS.md) | [DESIGN.md](./DESIGN.md)
 >
-> **Estratégia adotada:** Modificar exclusivamente `packages/web/src/app/api/auth/cli-callback/route.ts` para detectar sessão Supabase existente e, se presente, gerar o CLI token diretamente e redirecionar para `localhost:{port}/callback` sem passar pelo fluxo OAuth completo. O CLI e o endpoint `/api/auth/callback` não serão alterados.
+> **Estratégia adotada:** Propagar o IP real de escuta do servidor CLI (`address.address`) ao web app via parâmetro `host`. O web app valida o host contra allowlist SSRF (`127.0.0.1`, `::1`), salva em cookie `aitk-cli-host`, e usa o host correto (com formatação RFC 2732 para IPv6) na URL de callback — eliminando a dependência de `localhost` hardcoded.
 
 ---
 
-## 1. Implementação da Detecção de Sessão em `cli-callback/route.ts`
+## 1. CLI — Detectar e propagar host real de escuta
 
-- [x] 1.1 Adicionar import de `generateCliToken` de `@/lib/api/generate-cli-token` em `packages/web/src/app/api/auth/cli-callback/route.ts`
-- [x] 1.2 Mover (ou duplicar antecipadamente) a instanciação de `supabase = createClient()` para logo após a validação de `port` e `state`, antes do bloco OAuth atual — `packages/web/src/app/api/auth/cli-callback/route.ts` linha 36
-- [x] 1.3 Adicionar chamada a `supabase.auth.getUser()` imediatamente após a instanciação do cliente Supabase, para verificar se há sessão ativa no browser do solicitante — `packages/web/src/app/api/auth/cli-callback/route.ts`
-- [x] 1.4 Implementar o caminho rápido (`if (user)`): chamar `generateCliToken(user.id)`, montar `callbackUrl = http://localhost:{port}/callback?token=...&state=...` e retornar `NextResponse.redirect(callbackUrl)` — `packages/web/src/app/api/auth/cli-callback/route.ts`
-- [x] 1.5 Adicionar tratamento de erro no caminho rápido: envolver `generateCliToken` em `try/catch` e retornar `NextResponse.json({ error: 'Falha ao gerar CLI token.' }, { status: 500 })` em caso de exceção — `packages/web/src/app/api/auth/cli-callback/route.ts`
-- [x] 1.6 Garantir que o bloco OAuth existente (linhas 37–70) permanece intacto e é executado apenas quando `user` é `null` ou `getUser()` retorna erro (caminho sem sessão) — `packages/web/src/app/api/auth/cli-callback/route.ts`
+- [x] 1.1 Em `packages/cli/src/commands/login.ts`, na função `onListening` (L146), capturar `address.address` e normalizar `'::'` para `'::1'` (loopback IPv6 concreto, necessário porque `::` é wildcard de bind, não endereço de destino)
+- [x] 1.2 Em `packages/cli/src/commands/login.ts`, incluir o parâmetro `&host=${encodeURIComponent(host)}` na `authUrl` construída em `onListening` (L156–L157)
+- [x] 1.3 Em `packages/cli/src/commands/login.ts`, atualizar a mensagem de erro do timeout (L193–L195) para incluir sugestão `aitk login --token <token>` como alternativa (CA-07)
 
-## 2. Verificação de Requisitos de Segurança e Integridade
+## 2. Web App — Endpoint fast path (`cli-callback/route.ts`)
 
-- [x] 2.1 Confirmar que o parâmetro `state` está incluído via `encodeURIComponent` no `callbackUrl` do caminho rápido, garantindo proteção CSRF (RF-03 / RNF-02) — `packages/web/src/app/api/auth/cli-callback/route.ts`
-- [x] 2.2 Confirmar que os cookies `aitk-cli-port` e `aitk-cli-state` **não são criados** no caminho rápido — o `response.cookies.set(...)` existente só deve ocorrer no ramo OAuth (DT-02) — `packages/web/src/app/api/auth/cli-callback/route.ts`
-- [x] 2.3 Confirmar que `supabase.auth.getUser()` é utilizado (e não `getSession()`) para validar a sessão com round-trip ao servidor Supabase, conforme DT-03 — `packages/web/src/app/api/auth/cli-callback/route.ts`
+- [x] 2.1 Em `packages/web/src/app/api/auth/cli-callback/route.ts`, ler o parâmetro `host` da query string, validá-lo contra allowlist `new Set(['127.0.0.1', '::1'])` com default retrocompatível `'127.0.0.1'`, e retornar HTTP 400 se o valor enviado não for válido (proteção SSRF — RF-04, RNF-02)
+- [x] 2.2 Em `packages/web/src/app/api/auth/cli-callback/route.ts`, substituir `localhost` hardcoded (L47) pelo `host` validado com formatação RFC 2732 para IPv6 (`host.includes(':') ? '[' + host + ']' : host`) na URL de callback do fast path (RF-03)
+- [x] 2.3 Em `packages/web/src/app/api/auth/cli-callback/route.ts`, salvar o cookie `aitk-cli-host` com as mesmas flags de segurança dos cookies existentes (`httpOnly`, `secure`, `sameSite: 'lax'`, `path: '/'`, `maxAge: 600`) no caminho OAuth — junto com `aitk-cli-port` e `aitk-cli-state` (RF-07)
 
-## 3. Validação Manual / Critérios de Aceitação
+## 3. Web App — Endpoint OAuth callback (`callback/route.ts`)
 
-- [ ] 3.1 Verificar CA-01: `aitk login` completa em menos de 5 segundos quando o browser possui sessão Supabase ativa (cookie válido) — sem interação do usuário no navegador
-- [ ] 3.2 Verificar CA-02: CLI recebe `token` e `state` válidos via query params no callback rápido; `token` é verificável via `GET /api/v1/auth/verify` e `state` é idêntico ao enviado pelo CLI
-- [ ] 3.3 Verificar CA-03: fluxo OAuth via GitHub ocorre normalmente quando o usuário **não** está autenticado na web — terminal conclui o login após autenticação no navegador
-- [ ] 3.4 Verificar CA-04: proteção CSRF é mantida em ambos os caminhos — CLI rejeita callback com `state` inválido ou ausente com erro explícito
-- [ ] 3.5 Verificar CA-05: login web normal (usuário acessando a página sem CLI, sem parâmetros `port`/`state`) não é afetado — `/api/auth/callback` continua funcionando sem cookies CLI presentes
-- [ ] 3.6 Verificar CA-06 (parcial): quando `generateCliToken` falha, o browser exibe mensagem de erro JSON `{ error: 'Falha ao gerar CLI token.' }` com HTTP 500 — comportamento esperado documentado no DESIGN.md seção 4.2
+- [x] 3.1 Em `packages/web/src/app/api/auth/callback/route.ts`, ler o cookie `aitk-cli-host` (L78–L79) junto com `aitk-cli-port` e `aitk-cli-state`; usar default `'127.0.0.1'` se ausente (retrocompatibilidade com CLI sem atualização — DT-02)
+- [x] 3.2 Em `packages/web/src/app/api/auth/callback/route.ts`, substituir `localhost` hardcoded (L91) pela variável `cliHost` com formatação RFC 2732 para IPv6 na URL de callback do fluxo OAuth completo (RF-06, DT-04)
+- [x] 3.3 Em `packages/web/src/app/api/auth/callback/route.ts`, incluir `response.cookies.delete('aitk-cli-host')` em todos os caminhos de saída do bloco CLI: sucesso (L96–L98) e erro (L106–L108)
 
 ---
 
 *Documento gerado automaticamente pelo pipeline SDD — Fase 3 (Tarefas).*
-*Issue: #14 | Branch: fix/issue-14 | Data: 2026-03-12*
+*Issue: #17 | Branch: fix/issue-17 | Data: 2026-03-12*

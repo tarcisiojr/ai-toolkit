@@ -1,99 +1,169 @@
-# Requisitos — Issue #5: Falha no Job de Release (release-please)
+# Requisitos — Issue #17: Erro no login do CLI via OAuth
 
 ## Resumo do Problema
 
-O workflow `Release Please` (`.github/workflows/release-please.yml`) falha ao tentar criar um Pull Request automático de release. O erro reportado é:
+O comando `aitk login` inicia um fluxo OAuth via browser para autenticação no AI Toolkit Registry. O browser abre corretamente, mas o CLI nunca recebe o callback de retorno, resultando em timeout de 120 segundos.
+
+### Fluxo atual (com bug)
 
 ```
-Error: release-please failed: GitHub Actions is not permitted to create or approve pull requests.
-https://docs.github.com/rest/pulls/pulls#create-a-pull-request
+CLI → abre browser → /api/auth/cli-callback?port=PORT&state=STATE
+                                  ↓
+                    (usuário já logado no portal)
+                                  ↓
+              web app gera CLI token e redireciona para:
+              http://localhost:PORT/callback?token=...&state=...
+                                  ↓
+                    ❌ browser não consegue alcançar o servidor local
+                                  ↓
+                    CLI aguarda 120s → timeout
 ```
 
 ### Causa Raiz
 
-O GitHub possui uma configuração de segurança no nível do repositório (e/ou organização) que controla se o `GITHUB_TOKEN` padrão do GitHub Actions pode criar ou aprovar Pull Requests. Por padrão, essa permissão pode estar desabilitada.
+O endpoint `/api/auth/cli-callback` redireciona o browser para `http://localhost:PORT/callback` (usando sempre `localhost` como hostname). O servidor HTTP local do CLI, porém, escuta em `::` (dual-stack IPv6+IPv4), com fallback automático para `127.0.0.1` se IPv6 não estiver disponível.
 
-O workflow **já declara** as permissões corretas no YAML:
+Há incompatibilidade de endereço em dois cenários:
 
-```yaml
-permissions:
-  contents: write
-  pull-requests: write
-```
+- **Caso A**: Servidor CLI escuta em `::` com `IPV6_V6ONLY=1` (kernel Linux com IPv6 exclusivo) → browser resolve `localhost` como `127.0.0.1` (IPv4) → conexão recusada
+- **Caso B**: Servidor CLI fez fallback para `127.0.0.1` (IPv4) → browser resolve `localhost` como `::1` (IPv6) → conexão recusada
+- **Caso C**: Políticas de segurança de alguns browsers bloqueiam redirect de HTTPS (`vercel.app`) para HTTP `localhost` em certas configurações
 
-Porém, as permissões declaradas no workflow só funcionam se a opção **"Allow GitHub Actions to create and approve pull requests"** estiver habilitada nas configurações do repositório em:
-
-> `Settings > Actions > General > Workflow permissions`
-
-Quando essa opção está desabilitada no nível do repositório/organização, o `GITHUB_TOKEN` é impedido de criar PRs, independentemente das permissões declaradas no workflow YAML.
+O mesmo problema ocorre no fluxo OAuth completo (usuário sem sessão ativa), pois `/api/auth/callback` também usa `http://localhost:${cliPort}/callback` no redirect final.
 
 ---
 
 ## Requisitos Funcionais
 
-### RF-01: Permissão para criar Pull Requests via GitHub Actions
-O sistema de CI/CD deve ser capaz de criar Pull Requests automaticamente na branch `main` usando o token de autenticação configurado no workflow `release-please.yml`.
+### RF-01 — Callback deve alcançar o servidor CLI
+O browser deve conseguir fazer requisição ao servidor HTTP temporário iniciado pelo CLI após completar o fluxo de autenticação no portal, independente de como `localhost` é resolvido no sistema do usuário.
 
-### RF-02: Execução bem-sucedida do Release Please
-O job `release-please` deve executar sem erros, criando ou atualizando o PR de release ao detectar commits convencionais (`feat`, `fix`, etc.) na branch `main`.
+### RF-02 — CLI deve informar o host real de escuta ao web app
+O CLI deve incluir o endereço IP real em que o servidor local está escutando (ex.: `127.0.0.1` ou `::1`) na URL de autenticação enviada ao web app, em vez de deixar o web app assumir `localhost`.
 
-### RF-03: Manutenção das permissões declaradas no workflow
-O arquivo `.github/workflows/release-please.yml` deve manter as declarações de permissão `contents: write` e `pull-requests: write` como boa prática de segurança (princípio do mínimo privilégio).
+### RF-03 — Web app deve usar o host informado pelo CLI na URL de callback
+Os endpoints `/api/auth/cli-callback` e `/api/auth/callback` devem construir a URL de callback usando o host informado pelo CLI (parâmetro `host`), não sempre `localhost`.
 
-### RF-04: Compatibilidade com o modo de autenticação adotado
-A solução deve funcionar com uma das seguintes abordagens, em ordem de preferência:
-1. **Habilitação da permissão no repositório** (configuração de settings): ativar "Allow GitHub Actions to create and approve pull requests" nas configurações do repositório GitHub.
-2. **PAT (Personal Access Token)**: substituir `${{ secrets.GITHUB_TOKEN }}` por um PAT com escopo `repo` armazenado como secret (ex: `secrets.RELEASE_PLEASE_TOKEN`), para os casos em que a configuração do repositório não puder ser alterada.
+### RF-04 — Web app deve validar o host informado pelo CLI
+O host recebido do CLI deve ser validado contra uma allowlist restrita (`127.0.0.1` e `::1`) para prevenir SSRF (Server-Side Request Forgery).
+
+### RF-05 — Compatibilidade com fast path (usuário já autenticado)
+Quando o usuário já possui sessão ativa no portal web, o CLI token deve ser gerado e entregue ao CLI sem exigir nova autenticação no GitHub/Supabase.
+
+### RF-06 — Compatibilidade com fluxo OAuth completo (usuário sem sessão)
+Quando o usuário não possui sessão ativa, o fluxo OAuth (GitHub → Supabase → callback) deve concluir com o CLI recebendo o token.
+
+### RF-07 — Cookie de host CLI deve ser preservado durante OAuth
+O host informado pelo CLI deve ser salvo em cookie seguro junto com `aitk-cli-port` e `aitk-cli-state`, para estar disponível no callback OAuth.
+
+### RF-08 — Mensagem de erro clara em caso de timeout
+Se o callback não for recebido dentro do prazo (120s), o CLI deve exibir mensagem de erro com sugestão de usar `aitk login --token <token>` como alternativa.
+
+### RF-09 — Fluxo `--token` não deve ser afetado
+O fluxo de autenticação via API token (`aitk login --token <token>`) não deve ser modificado.
 
 ---
 
 ## Requisitos Não-Funcionais
 
-### RNF-01: Segurança
-- O token utilizado deve ter o mínimo de escopos necessários.
-- Se for usado um PAT, ele deve ser rotacionado periodicamente e armazenado exclusivamente como GitHub Secret (nunca em código).
+### RNF-01 — Proteção CSRF preservada
+A correção não deve remover ou enfraquecer o mecanismo de validação via `state` (nonce CSRF).
 
-### RNF-02: Manutenibilidade
-- A solução deve ser simples e não introduzir dependências extras ou scripts adicionais.
-- A configuração deve ser auto-documentada via comentários no workflow YAML.
+### RNF-02 — Proteção SSRF no web app
+O web app deve validar o host recebido do CLI contra allowlist estrita (`127.0.0.1`, `::1`) antes de redirecionar, evitando SSRF.
 
-### RNF-03: Sem impacto em outros workflows
-- A correção não deve alterar o comportamento dos workflows `ci.yml`, `publish.yml` ou `npm-publish.yml`.
+### RNF-03 — Sem exposição de token
+O CLI token não deve ser exposto em logs do servidor ou em qualquer saída persistente além do terminal do usuário.
+
+### RNF-04 — Compatibilidade cross-platform
+A solução deve funcionar em macOS, Linux e Windows.
+
+### RNF-05 — Sem novas dependências de runtime
+A correção não deve introduzir novas dependências de runtime no pacote CLI ou web.
+
+### RNF-06 — Tempo de resposta
+O fluxo de login interativo deve completar em menos de 30 segundos em condições normais de rede.
 
 ---
 
 ## Escopo
 
 ### Incluído
-- Diagnóstico e documentação da causa raiz do erro no workflow `release-please.yml`.
-- Correção do workflow para habilitar a criação de PRs pelo GitHub Actions.
-- Instrução de configuração de repositório necessária (settings do GitHub) e/ou ajuste no arquivo YAML de workflow.
+
+- Ajuste no CLI (`login.ts`): detectar o endereço real de escuta após `server.listen()` e incluir o parâmetro `host` na URL de autenticação enviada ao web app
+- Ajuste no web app (`cli-callback/route.ts`): ler e validar o parâmetro `host`, salvar em cookie `aitk-cli-host`, usar o host na construção da URL de callback (fast path)
+- Ajuste no web app (`callback/route.ts`): ler o cookie `aitk-cli-host` e usá-lo na URL de callback do fluxo OAuth completo; limpar o cookie após uso
+- Validação SSRF no web app (allowlist: `127.0.0.1`, `::1`)
 
 ### Excluído
-- Alterações nos workflows `ci.yml`, `publish.yml` e `npm-publish.yml`.
-- Alterações em código-fonte dos pacotes (`packages/`).
-- Mudanças na lógica de versionamento ou nas configurações do `release-please-config.json` e `.release-please-manifest.json`.
-- Criação de novos secrets além do que for estritamente necessário para a correção.
+
+- Alteração no mecanismo de geração ou armazenamento de tokens (`generateCliToken`, tabela `api_tokens`)
+- Mudança no fluxo `--token` (CI/CD via API token)
+- Suporte a outros providers OAuth além do GitHub
+- Alteração na UI do portal web
+- Mudança no valor do timeout de 120s
+- Alteração em outros comandos CLI
 
 ---
 
 ## Critérios de Aceitação
 
-| # | Critério | Como verificar |
-|---|----------|---------------|
-| AC-01 | O workflow `Release Please` executa com sucesso após um commit convencional na branch `main` | Verificar o resultado do job na aba "Actions" do repositório GitHub — status deve ser ✅ `success` |
-| AC-02 | Um Pull Request de release é criado (ou atualizado) automaticamente pelo bot `github-actions[bot]` | Verificar a existência de um PR aberto com título no padrão `chore(main): release X.Y.Z` |
-| AC-03 | O erro `GitHub Actions is not permitted to create or approve pull requests` não aparece mais nos logs | Inspecionar logs do step `googleapis/release-please-action@v4` |
-| AC-04 | Nenhum outro workflow é quebrado pela alteração | Executar manualmente os workflows `CI`, `Publish Artifact` e `Publish to npm` e confirmar que todos passam |
-| AC-05 | Se for usado PAT, o token está armazenado como secret e não hardcoded no YAML | Inspecionar o arquivo `release-please.yml` — não deve conter nenhum valor literal de token |
+### CA-01 — Fast path com sessão ativa (IPv4)
+**Dado** que o usuário está autenticado no portal web e o servidor CLI escutou em `127.0.0.1`
+**Quando** executa `aitk login`
+**Então** o browser abre, o login completa em menos de 10s, e o CLI exibe mensagem de sucesso com nome do usuário.
+
+### CA-02 — Fast path com sessão ativa (IPv6)
+**Dado** que o usuário está autenticado no portal web e o servidor CLI escutou em `::1`
+**Quando** executa `aitk login`
+**Então** o browser abre, o login completa em menos de 10s, e o CLI exibe mensagem de sucesso com nome do usuário.
+
+### CA-03 — Fluxo OAuth sem sessão ativa
+**Dado** que o usuário não possui sessão ativa no portal
+**Quando** executa `aitk login`
+**Então** o browser abre o GitHub para autenticação, após autorizar o CLI exibe sucesso em menos de 30s.
+
+### CA-04 — Rejeição de host inválido (proteção SSRF)
+**Dado** que a requisição ao web app inclui um `host` diferente de `127.0.0.1` ou `::1`
+**Quando** o web app processa a requisição em `/api/auth/cli-callback`
+**Então** retorna HTTP 400 sem redirecionar.
+
+### CA-05 — Cookie de host preservado no fluxo OAuth
+**Dado** que o fluxo OAuth completo é executado (sem sessão ativa)
+**Quando** o callback do GitHub chega em `/api/auth/callback`
+**Então** o cookie `aitk-cli-host` está presente e é usado para construir a URL correta de retorno ao CLI.
+
+### CA-06 — Nenhuma regressão no fluxo `--token`
+**Quando** executa `aitk login --token aitk_xxx`
+**Então** o token é verificado e o login é concluído normalmente (comportamento inalterado).
+
+### CA-07 — Timeout com mensagem orientativa
+**Dado** que o callback não é recebido em 120s
+**Quando** o timeout expira
+**Então** o CLI exibe mensagem de erro que inclui sugestão de usar `aitk login --token <token>` como alternativa.
 
 ---
 
-## Decisões Técnicas Registradas
+## Contexto Técnico Relevante
 
-**Decisão:** A solução preferencial é habilitar "Allow GitHub Actions to create and approve pull requests" nas configurações do repositório (Settings > Actions > General), pois:
-- Não requer criação de secrets adicionais.
-- Não requer manutenção de um PAT.
-- O workflow já possui as permissões YAML corretas (`pull-requests: write`).
+| Componente | Arquivo | Responsabilidade |
+|---|---|---|
+| CLI — comando login | `packages/cli/src/commands/login.ts` | Inicia servidor local, abre browser, aguarda callback |
+| CLI — servidor HTTP local | `waitForOAuthCallback()` em `login.ts` (L92–L204) | Escuta em `::` com fallback para `127.0.0.1` |
+| Web — fast path | `packages/web/src/app/api/auth/cli-callback/route.ts` | Detecta sessão ativa e redireciona para CLI |
+| Web — OAuth callback | `packages/web/src/app/api/auth/callback/route.ts` | Conclui OAuth e redireciona para CLI |
+| Web — geração de token | `packages/web/src/lib/api/generate-cli-token.ts` | Gera e persiste CLI token no banco |
 
-**Alternativa (se settings não puder ser alterado):** Criar um PAT com escopo `repo`, armazená-lo como secret `RELEASE_PLEASE_TOKEN` e substituir `${{ secrets.GITHUB_TOKEN }}` no `token:` do workflow. Isso resolve o bloqueio mesmo sem alterar as configurações do repositório.
+**Parâmetros atuais enviados pelo CLI ao web app:**
+- `port`: porta aleatória escolhida pelo SO (parâmetro existente)
+- `state`: 256 bits de entropia, nonce CSRF (parâmetro existente)
+
+**Novo parâmetro proposto:**
+- `host`: endereço IP real em que o servidor está escutando (`127.0.0.1` ou `::1`)
+
+**Cookies CLI no web app (atuais):**
+- `aitk-cli-port`: porta do servidor CLI (maxAge: 600s, httpOnly, secure, sameSite: lax)
+- `aitk-cli-state`: nonce CSRF (mesmas flags)
+
+**Novo cookie proposto:**
+- `aitk-cli-host`: host real do servidor CLI (mesmas flags de segurança)
