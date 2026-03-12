@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.2](https://github.com/tarcisiojr/ai-toolkit/compare/@tarcisiojunior/web-v0.3.1...@tarcisiojunior/web-v0.3.2) (2026-03-12)
+
+
+### Correções
+
+* **deps:** sync @tarcisiojunior/shared to 0.2.2 and regenerate lock file ([5d01238](https://github.com/tarcisiojr/ai-toolkit/commit/5d0123824d2dafef1884b81ca3644c621fff6f2e))
+* **deps:** sync @tarcisiojunior/shared to 0.2.2 and regenerate lock file ([3d2e081](https://github.com/tarcisiojr/ai-toolkit/commit/3d2e0819017fdddccbe87a42691757034a4c8711))
+
 ## [0.3.1](https://github.com/tarcisiojr/ai-toolkit/compare/@tarcisiojunior/web-v0.3.0...@tarcisiojunior/web-v0.3.1) (2026-03-12)
 
 
