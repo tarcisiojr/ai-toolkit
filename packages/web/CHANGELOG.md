@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/tarcisiojr/ai-toolkit/compare/@tarcisiojunior/web-v0.3.2...@tarcisiojunior/web-v0.3.3) (2026-03-12)
+
+
+### Correções
+
+* **auth:** detect existing session in cli-callback to prevent login timeout ([eb91fb4](https://github.com/tarcisiojr/ai-toolkit/commit/eb91fb405f672261afbbcf50b21d13a6e7af61fa))
+
 ## [0.3.2](https://github.com/tarcisiojr/ai-toolkit/compare/@tarcisiojunior/web-v0.3.1...@tarcisiojunior/web-v0.3.2) (2026-03-12)
 
 
