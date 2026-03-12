@@ -2,40 +2,28 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { exec } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { platform } from 'node:os';
 import { getConfig } from '../core/config.js';
 import { saveAuth, getAuth } from '../core/auth.js';
 import { logger } from '../utils/logger.js';
 import type { CliAuth } from '@tarcisiojunior/shared';
 
-// ── Constantes do Supabase ──────────────────────────────────────────────
-const SUPABASE_URL = 'https://nxdcgmpvvyfgqerenxrx.supabase.co';
-const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54ZGNnbXB2dnlmZ3FlcmVueHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwMjA4MDksImV4cCI6MjA4ODU5NjgwOX0.iT49b4UOLKmXPraadgNp3ejmrz7pjA3Gvc1sHO-lqqE';
+// URL base do web app (intermediário OAuth)
+const WEB_APP_URL = 'https://ai-toolkit-henna.vercel.app';
 
 // Tempo limite para aguardar o callback OAuth (em milissegundos)
 const OAUTH_TIMEOUT_MS = 120_000;
 
-/** Tokens recebidos do callback OAuth */
-interface OAuthTokens {
-  access_token: string;
-  refresh_token: string;
+/** Resultado recebido do callback CLI */
+interface CliCallbackResult {
+  token: string;
+  username: string;
+  email: string;
 }
 
-/** Dados do usuário retornados pelo Supabase */
-interface SupabaseUser {
-  id: string;
-  email?: string;
-  user_metadata?: {
-    user_name?: string;
-    preferred_username?: string;
-    full_name?: string;
-    avatar_url?: string;
-  };
-}
-
-// ── Página HTML que extrai o fragment do callback OAuth ────────────────
-function buildCallbackHtml(): string {
+// ── Página HTML de sucesso exibida no browser após autenticação ─────────
+function buildSuccessHtml(): string {
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -56,68 +44,16 @@ function buildCallbackHtml(): string {
       text-align: center;
       padding: 2rem;
     }
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid #333;
-      border-top-color: #0ea5e9;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 1.5rem;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
     .success { color: #22c55e; }
-    .error { color: #ef4444; }
     h1 { font-size: 1.5rem; font-weight: 600; }
     p { color: #a1a1aa; margin-top: 0.5rem; }
   </style>
 </head>
 <body>
-  <div class="container" id="content">
-    <div class="spinner"></div>
-    <h1>Autenticando...</h1>
-    <p>Aguarde enquanto processamos sua autenticacao.</p>
+  <div class="container">
+    <h1 class="success">Autenticado com sucesso!</h1>
+    <p>Pode fechar esta aba e voltar ao terminal.</p>
   </div>
-  <script>
-    (function() {
-      // Extrai os tokens do fragment (#) da URL
-      var hash = window.location.hash.substring(1);
-      var params = new URLSearchParams(hash);
-      var accessToken = params.get('access_token');
-      var refreshToken = params.get('refresh_token');
-
-      if (!accessToken) {
-        document.getElementById('content').innerHTML =
-          '<h1 class="error">Erro na autenticacao</h1>' +
-          '<p>Nenhum token encontrado. Tente novamente.</p>';
-        return;
-      }
-
-      // Envia os tokens de volta ao servidor local via POST
-      fetch('/callback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          access_token: accessToken,
-          refresh_token: refreshToken || ''
-        })
-      })
-      .then(function(res) {
-        if (res.ok) {
-          document.getElementById('content').innerHTML =
-            '<h1 class="success">Autenticado com sucesso!</h1>' +
-            '<p>Pode fechar esta aba e voltar ao terminal.</p>';
-        } else {
-          throw new Error('Falha ao enviar tokens');
-        }
-      })
-      .catch(function() {
-        document.getElementById('content').innerHTML =
-          '<h1 class="error">Erro ao processar</h1>' +
-          '<p>Tente executar o login novamente no terminal.</p>';
-      });
-    })();
-  </script>
 </body>
 </html>`;
 }
@@ -150,49 +86,54 @@ function openBrowser(url: string): void {
 }
 
 /**
- * Inicia servidor HTTP local temporário e aguarda callback do OAuth.
- * Retorna os tokens recebidos do Supabase via redirect.
+ * Inicia servidor HTTP local temporário e aguarda callback do OAuth via web app.
+ * Retorna o CLI token e dados do usuário recebidos via query params.
  */
-function waitForOAuthCallback(): Promise<OAuthTokens> {
+function waitForOAuthCallback(): Promise<CliCallbackResult> {
   return new Promise((resolve, reject) => {
     let resolved = false;
 
+    // Gerar nonce state para proteção CSRF (256 bits de entropia)
+    const expectedState = randomBytes(32).toString('hex');
+
     const server = createServer((req: IncomingMessage, res: ServerResponse) => {
-      // GET /callback — Serve a página HTML que extrai o fragment
+      // GET /callback?token=xxx&state=xxx — Recebe token e state via query params
       if (req.method === 'GET' && req.url?.startsWith('/callback')) {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(buildCallbackHtml());
-        return;
-      }
+        const url = new URL(req.url, 'http://localhost');
+        const token = url.searchParams.get('token');
+        const receivedState = url.searchParams.get('state');
 
-      // POST /callback — Recebe os tokens enviados pela página HTML
-      if (req.method === 'POST' && req.url === '/callback') {
-        let body = '';
-        req.on('data', (chunk: Buffer) => {
-          body += chunk.toString();
-        });
-        req.on('end', () => {
-          try {
-            const tokens = JSON.parse(body) as OAuthTokens;
-
-            if (!tokens.access_token) {
-              res.writeHead(400, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ error: 'Token ausente' }));
-              return;
-            }
-
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ ok: true }));
-
-            resolved = true;
-            // Fecha o servidor após enviar a resposta
+        // Validar state (proteção CSRF)
+        if (!receivedState || receivedState !== expectedState) {
+          res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+          res.end('State invalido. Possivel ataque CSRF. Tente o login novamente.');
+          if (!resolved) {
             server.close();
-            resolve(tokens);
-          } catch {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'JSON invalido' }));
+            reject(new Error('State invalido no callback. Possivel ataque CSRF.'));
           }
-        });
+          return;
+        }
+
+        // Validar presença do token
+        if (!token) {
+          res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+          res.end('Token ausente no callback.');
+          if (!resolved) {
+            server.close();
+            reject(new Error('Token ausente no callback. Falha na geracao do token pelo web app.'));
+          }
+          return;
+        }
+
+        // Responder com página de sucesso
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(buildSuccessHtml());
+
+        resolved = true;
+        server.close();
+
+        // username e email serão obtidos via verifyApiToken — retornar token por enquanto
+        resolve({ token, username: '', email: '' });
         return;
       }
 
@@ -210,11 +151,10 @@ function waitForOAuthCallback(): Promise<OAuthTokens> {
       }
 
       const port = address.port;
-      const redirectUrl = `http://localhost:${port}/callback`;
 
-      // Monta a URL de autorização OAuth do Supabase
+      // Constrói URL para o web app (intermediário OAuth)
       const authUrl =
-        `${SUPABASE_URL}/auth/v1/authorize?provider=github&redirect_to=${encodeURIComponent(redirectUrl)}`;
+        `${WEB_APP_URL}/api/auth/cli-callback?port=${port}&state=${encodeURIComponent(expectedState)}`;
 
       logger.print(`  ${logger.stepIndicator(1, 3)} ${chalk.gray('Abrindo navegador para autenticacao via GitHub...')}`);
       logger.blank();
@@ -247,26 +187,6 @@ function waitForOAuthCallback(): Promise<OAuthTokens> {
       clearTimeout(timeout);
     });
   });
-}
-
-/**
- * Busca informações do usuário autenticado no Supabase usando o access_token.
- * Chama GET /auth/v1/user com o token Bearer.
- */
-async function fetchSupabaseUser(accessToken: string): Promise<SupabaseUser> {
-  const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'apikey': SUPABASE_ANON_KEY,
-    },
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.text().catch(() => 'Erro desconhecido');
-    throw new Error(`Falha ao buscar perfil do usuario (HTTP ${response.status}): ${errorBody}`);
-  }
-
-  return response.json() as Promise<SupabaseUser>;
 }
 
 /**
@@ -343,8 +263,9 @@ async function loginWithToken(token: string): Promise<void> {
 }
 
 /**
- * Fluxo de login interativo via OAuth do GitHub (Supabase).
- * Abre o navegador, aguarda callback e salva as credenciais.
+ * Fluxo de login interativo via OAuth do GitHub.
+ * Usa o web app como intermediário para evitar o problema de redirect_to
+ * com porta aleatória não registrada na allowlist do Supabase.
  */
 async function loginWithOAuth(): Promise<void> {
   const config = getConfig();
@@ -363,27 +284,22 @@ async function loginWithOAuth(): Promise<void> {
   logger.blank();
 
   try {
-    // Passo 1: Aguarda callback OAuth (abre navegador internamente)
-    const tokens = await waitForOAuthCallback();
+    // Passo 1: Aguarda callback OAuth via web app (abre navegador internamente)
+    const callbackResult = await waitForOAuthCallback();
 
-    // Passo 2: Busca dados do usuário com o access_token
+    // Passo 2: Verificar token recebido e obter dados do usuário
     logger.print(`  ${logger.stepIndicator(2, 3)} ${chalk.gray('Autenticando...')}`);
 
-    const user = await fetchSupabaseUser(tokens.access_token);
+    const userData = await verifyApiToken(callbackResult.token, config.registry);
 
-    // Extrai username do GitHub dos metadados do usuário
-    const username =
-      user.user_metadata?.user_name ||
-      user.user_metadata?.preferred_username ||
-      'unknown';
-
-    const email = user.email || '';
+    const username = userData.username || 'unknown';
+    const email = callbackResult.email || '';
 
     // Salva as credenciais no arquivo de autenticação
     const auth: CliAuth = {
-      token: tokens.access_token,
+      token: callbackResult.token,
       user: {
-        id: user.id,
+        id: userData.userId,
         username,
         email,
       },

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { generateCliToken } from '@/lib/api/generate-cli-token';
 
 /**
  * Extrai a locale do path ou usa pt-BR como padrão.
@@ -73,6 +74,42 @@ export async function GET(request: NextRequest) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (!error) {
+        // Verificar presença de cookies CLI para fluxo de login via terminal
+        const cliPort = request.cookies.get('aitk-cli-port')?.value;
+        const cliState = request.cookies.get('aitk-cli-state')?.value;
+
+        if (cliPort && cliState) {
+          console.log(`[auth/callback] Fluxo CLI detectado: port=${cliPort}`);
+          try {
+            const { data: { user: sessionUser } } = await supabase.auth.getUser();
+            if (!sessionUser) {
+              throw new Error('Sessao invalida apos troca do code');
+            }
+
+            const tokenResult = await generateCliToken(sessionUser.id);
+
+            const callbackUrl = `http://localhost:${cliPort}/callback?token=${encodeURIComponent(tokenResult.token)}&state=${encodeURIComponent(cliState)}`;
+            console.log(`[auth/callback] Redirecionando CLI para: http://localhost:${cliPort}/callback`);
+
+            const response = NextResponse.redirect(callbackUrl);
+            // Limpar cookies CLI após uso
+            response.cookies.delete('aitk-cli-port');
+            response.cookies.delete('aitk-cli-state');
+            response.cookies.delete('aitk-auth-next');
+            return response;
+          } catch (cliErr) {
+            console.error('[auth/callback] Erro no fluxo CLI:', cliErr);
+            // Em caso de erro no fluxo CLI, redirecionar para login com erro
+            const response = NextResponse.redirect(
+              new URL('/pt-BR/login?error=cli_token_failed', origin),
+            );
+            response.cookies.delete('aitk-cli-port');
+            response.cookies.delete('aitk-cli-state');
+            response.cookies.delete('aitk-auth-next');
+            return response;
+          }
+        }
+
         console.log(`[auth/callback] Sessão criada com sucesso, redirecionando para: ${next}`);
         const response = NextResponse.redirect(new URL(next, origin));
         // Limpar cookie de next path após uso
