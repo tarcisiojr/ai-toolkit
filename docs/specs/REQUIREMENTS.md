@@ -1,88 +1,115 @@
-# Requisitos — Issue #17: Erro no login do CLI via OAuth
+# Requisitos — Issue #20: Revisão de CI
 
 ## Resumo do Problema
 
-O comando `aitk login` inicia um fluxo OAuth via browser para autenticação no AI Toolkit Registry. O browser abre corretamente, mas o CLI nunca recebe o callback de retorno, resultando em timeout de 120 segundos.
+O pipeline de CI/CD do repositório `ai-toolkit` (monorepo Turborepo com três pacotes: `shared`, `cli` e `web`) não está realizando deploys automáticos ao realizar push na branch `main`. O objetivo é que, após validar a qualidade do código, os deploys ocorram automaticamente na **Vercel** (aplicação Next.js `packages/web`) e no **npm** (pacotes `@tarcisiojunior/shared` e `aitk-cli`), utilizando versionamento semântico baseado em **Conventional Commits**.
 
-### Fluxo atual (com bug)
+### Estado Atual dos Workflows
 
-```
-CLI → abre browser → /api/auth/cli-callback?port=PORT&state=STATE
-                                  ↓
-                    (usuário já logado no portal)
-                                  ↓
-              web app gera CLI token e redireciona para:
-              http://localhost:PORT/callback?token=...&state=...
-                                  ↓
-                    ❌ browser não consegue alcançar o servidor local
-                                  ↓
-                    CLI aguarda 120s → timeout
-```
+| Arquivo | Trigger | Problema |
+|---|---|---|
+| `ci.yml` | push/PR → main | Roda testes/lint/build. Não dispara deploys. |
+| `release-please.yml` | push → main | Cria PRs de release com bump de versão. Não conectado a deploys. |
+| `npm-publish.yml` | `release: published` + `workflow_dispatch` | Só publica após release. Não automático no push ao main. |
+| `publish.yml` | `release: published`, `push: tags v*`, `workflow_dispatch` | Publica no registry aitk. Desconectado do CI. |
+| Vercel | GitHub App (externo) | Deploy ocorre imediatamente ao push, SEM aguardar CI passar. |
 
-### Causa Raiz
+### Problemas Identificados
 
-O endpoint `/api/auth/cli-callback` redireciona o browser para `http://localhost:PORT/callback` (usando sempre `localhost` como hostname). O servidor HTTP local do CLI, porém, escuta em `::` (dual-stack IPv6+IPv4), com fallback automático para `127.0.0.1` se IPv6 não estiver disponível.
-
-Há incompatibilidade de endereço em dois cenários:
-
-- **Caso A**: Servidor CLI escuta em `::` com `IPV6_V6ONLY=1` (kernel Linux com IPv6 exclusivo) → browser resolve `localhost` como `127.0.0.1` (IPv4) → conexão recusada
-- **Caso B**: Servidor CLI fez fallback para `127.0.0.1` (IPv4) → browser resolve `localhost` como `::1` (IPv6) → conexão recusada
-- **Caso C**: Políticas de segurança de alguns browsers bloqueiam redirect de HTTPS (`vercel.app`) para HTTP `localhost` em certas configurações
-
-O mesmo problema ocorre no fluxo OAuth completo (usuário sem sessão ativa), pois `/api/auth/callback` também usa `http://localhost:${cliPort}/callback` no redirect final.
+1. **Sem orquestração entre CI e deploys**: Nenhum workflow espera o CI (`ci.yml`) ser aprovado antes de disparar deploys.
+2. **Vercel deploys sem gate de qualidade**: O GitHub App da Vercel faz deploy no push sem aguardar CI.
+3. **Publicação npm não é automática no push ao main**: Requer fusão do PR do release-please + criação de GitHub Release.
+4. **Workflows desconexos**: `ci.yml`, `release-please.yml`, `npm-publish.yml` e `publish.yml` operam de forma independente, sem dependência explícita entre eles.
+5. **`vercel.json` com build command incorreto**: O campo `buildCommand` escreve `{"version":1,"success":false}` no `export-detail.json`, podendo causar falhas no deploy da Vercel.
 
 ---
 
 ## Requisitos Funcionais
 
-### RF-01 — Callback deve alcançar o servidor CLI
-O browser deve conseguir fazer requisição ao servidor HTTP temporário iniciado pelo CLI após completar o fluxo de autenticação no portal, independente de como `localhost` é resolvido no sistema do usuário.
+### RF-01 — CI como Gate Obrigatório
 
-### RF-02 — CLI deve informar o host real de escuta ao web app
-O CLI deve incluir o endereço IP real em que o servidor local está escutando (ex.: `127.0.0.1` ou `::1`) na URL de autenticação enviada ao web app, em vez de deixar o web app assumir `localhost`.
+O pipeline de CI (`lint`, `type-check`, `testes`, `build`) **deve** ser executado e aprovado antes de qualquer deploy ou publicação ao realizar push na branch `main`.
 
-### RF-03 — Web app deve usar o host informado pelo CLI na URL de callback
-Os endpoints `/api/auth/cli-callback` e `/api/auth/callback` devem construir a URL de callback usando o host informado pelo CLI (parâmetro `host`), não sempre `localhost`.
+**Critério**: Deploys na Vercel e publicações no npm só ocorrem se o job de CI concluir com sucesso.
 
-### RF-04 — Web app deve validar o host informado pelo CLI
-O host recebido do CLI deve ser validado contra uma allowlist restrita (`127.0.0.1` e `::1`) para prevenir SSRF (Server-Side Request Forgery).
+---
 
-### RF-05 — Compatibilidade com fast path (usuário já autenticado)
-Quando o usuário já possui sessão ativa no portal web, o CLI token deve ser gerado e entregue ao CLI sem exigir nova autenticação no GitHub/Supabase.
+### RF-02 — Deploy Automático na Vercel após CI
 
-### RF-06 — Compatibilidade com fluxo OAuth completo (usuário sem sessão)
-Quando o usuário não possui sessão ativa, o fluxo OAuth (GitHub → Supabase → callback) deve concluir com o CLI recebendo o token.
+Após a aprovação do CI em push na `main`, o deploy da aplicação `packages/web` **deve** ser disparado automaticamente na Vercel.
 
-### RF-07 — Cookie de host CLI deve ser preservado durante OAuth
-O host informado pelo CLI deve ser salvo em cookie seguro junto com `aitk-cli-port` e `aitk-cli-state`, para estar disponível no callback OAuth.
+**Critério**: Um workflow GitHub Actions deve usar `workflow_run` (ou mecanismo equivalente) para aguardar o CI passar e então acionar o deploy na Vercel via Vercel CLI ou Vercel Deploy Hook.
 
-### RF-08 — Mensagem de erro clara em caso de timeout
-Se o callback não for recebido dentro do prazo (120s), o CLI deve exibir mensagem de erro com sugestão de usar `aitk login --token <token>` como alternativa.
+**Detalhes técnicos**:
+- Projeto: `@tarcisiojunior/web` (Next.js 15)
+- O deploy deve utilizar o `vercel.json` existente como configuração base
+- O campo `buildCommand` no `vercel.json` deve ser corrigido (remover escrita de `"success":false`)
 
-### RF-09 — Fluxo `--token` não deve ser afetado
-O fluxo de autenticação via API token (`aitk login --token <token>`) não deve ser modificado.
+---
+
+### RF-03 — Publicação Automática no npm após CI + Versionamento Semântico
+
+Após CI aprovado e quando houver nova versão gerada pelo release-please, os pacotes `@tarcisiojunior/shared` e `aitk-cli` **devem** ser publicados automaticamente no npm.
+
+**Sequência esperada**:
+1. Push na `main` → CI passa
+2. release-please detecta commits convencionais → cria PR de release com bump de versão
+3. Merge do PR de release → release-please cria GitHub Release com tag
+4. `npm-publish.yml` dispara automaticamente via `release: published` → publica no npm
+
+**Critério**: O elo entre CI e publicação deve ser explícito e o fluxo completo deve funcionar sem intervenção manual além de aprovar o PR de release.
+
+---
+
+### RF-04 — Versionamento Semântico via Conventional Commits
+
+O versionamento dos três pacotes (`shared`, `cli`, `web`) **deve** ser gerenciado automaticamente pelo release-please com base em Conventional Commits.
+
+**Critério**:
+- `feat:` → bump minor
+- `fix:` → bump patch
+- `feat!:` / `BREAKING CHANGE:` → bump major
+- Configuração existente em `release-please-config.json` e `.release-please-manifest.json` deve ser validada e mantida funcional
+
+---
+
+### RF-05 — Validação de Commits em Pull Requests
+
+Commits em Pull Requests direcionados à `main` **devem** ser validados pelo commitlint para garantir aderência ao padrão Conventional Commits.
+
+**Critério**: Job `commitlint` no `ci.yml` deve estar funcional e cobrir todos os commits do PR (do base sha ao head sha).
+
+---
+
+### RF-06 — Proteção da Branch `main` (Configuração GitHub)
+
+A branch `main` **deve** ter proteção configurada no GitHub para exigir aprovação do CI antes de permitir merge.
+
+**Critério**: Branch protection rules requerendo o status check do CI como obrigatório (requer configuração no painel do GitHub pelo administrador do repositório).
 
 ---
 
 ## Requisitos Não-Funcionais
 
-### RNF-01 — Proteção CSRF preservada
-A correção não deve remover ou enfraquecer o mecanismo de validação via `state` (nonce CSRF).
+### RNF-01 — Idempotência de Publicações
 
-### RNF-02 — Proteção SSRF no web app
-O web app deve validar o host recebido do CLI contra allowlist estrita (`127.0.0.1`, `::1`) antes de redirecionar, evitando SSRF.
+Os workflows de publicação **devem** ser idempotentes: se uma versão já existir no npm, o workflow deve pular a publicação sem falhar. Já parcialmente implementado em `npm-publish.yml` com verificação `npm view`.
 
-### RNF-03 — Sem exposição de token
-O CLI token não deve ser exposto em logs do servidor ou em qualquer saída persistente além do terminal do usuário.
+### RNF-02 — Segurança de Credenciais
 
-### RNF-04 — Compatibilidade cross-platform
-A solução deve funcionar em macOS, Linux e Windows.
+Tokens de autenticação (`NPM_TOKEN`, `AITK_API_TOKEN`, tokens da Vercel) **devem** ser armazenados exclusivamente como GitHub Secrets e nunca expostos em logs.
 
-### RNF-05 — Sem novas dependências de runtime
-A correção não deve introduzir novas dependências de runtime no pacote CLI ou web.
+### RNF-03 — Feedback Rápido
 
-### RNF-06 — Tempo de resposta
-O fluxo de login interativo deve completar em menos de 30 segundos em condições normais de rede.
+O CI deve fornecer feedback ao desenvolvedor em tempo razoável. O uso do Turborepo com cache de artefatos deve ser garantido nos workflows para evitar rebuilds desnecessários.
+
+### RNF-04 — Concorrência Controlada
+
+Publicações simultâneas do mesmo pacote devem ser evitadas. Os grupos de concorrência (`concurrency`) já definidos nos workflows devem ser preservados.
+
+### RNF-05 — Observabilidade
+
+Cada workflow deve gerar um sumário legível no GitHub Actions (`$GITHUB_STEP_SUMMARY`) indicando o resultado das operações. Já implementado em `npm-publish.yml` e `publish.yml`.
 
 ---
 
@@ -90,80 +117,45 @@ O fluxo de login interativo deve completar em menos de 30 segundos em condiçõe
 
 ### Incluído
 
-- Ajuste no CLI (`login.ts`): detectar o endereço real de escuta após `server.listen()` e incluir o parâmetro `host` na URL de autenticação enviada ao web app
-- Ajuste no web app (`cli-callback/route.ts`): ler e validar o parâmetro `host`, salvar em cookie `aitk-cli-host`, usar o host na construção da URL de callback (fast path)
-- Ajuste no web app (`callback/route.ts`): ler o cookie `aitk-cli-host` e usá-lo na URL de callback do fluxo OAuth completo; limpar o cookie após uso
-- Validação SSRF no web app (allowlist: `127.0.0.1`, `::1`)
+- Revisão e correção dos workflows GitHub Actions existentes (`ci.yml`, `release-please.yml`, `npm-publish.yml`, `publish.yml`)
+- Criação de workflow para deploy automático na Vercel após CI passar (ou integração via Deploy Hook)
+- Validação da cadeia completa de eventos: push → CI → release-please → GitHub Release → npm publish + Vercel deploy
+- Correção do `vercel.json` (campo `buildCommand` com valor `"success":false`)
+- Garantia de que o release-please está corretamente configurado para os três pacotes do monorepo
 
 ### Excluído
 
-- Alteração no mecanismo de geração ou armazenamento de tokens (`generateCliToken`, tabela `api_tokens`)
-- Mudança no fluxo `--token` (CI/CD via API token)
-- Suporte a outros providers OAuth além do GitHub
-- Alteração na UI do portal web
-- Mudança no valor do timeout de 120s
-- Alteração em outros comandos CLI
+- Mudanças no código-fonte dos pacotes (`packages/shared`, `packages/cli`, `packages/web`)
+- Configuração de branch protection rules no GitHub (requer acesso de administrador ao repositório)
+- Criação de novos ambientes ou infraestrutura além do que já existe
+- Modificação da lógica de negócio do CLI ou da aplicação web
+- Alteração da ferramenta de versionamento (release-please permanece como padrão)
 
 ---
 
 ## Critérios de Aceitação
 
-### CA-01 — Fast path com sessão ativa (IPv4)
-**Dado** que o usuário está autenticado no portal web e o servidor CLI escutou em `127.0.0.1`
-**Quando** executa `aitk login`
-**Então** o browser abre, o login completa em menos de 10s, e o CLI exibe mensagem de sucesso com nome do usuário.
-
-### CA-02 — Fast path com sessão ativa (IPv6)
-**Dado** que o usuário está autenticado no portal web e o servidor CLI escutou em `::1`
-**Quando** executa `aitk login`
-**Então** o browser abre, o login completa em menos de 10s, e o CLI exibe mensagem de sucesso com nome do usuário.
-
-### CA-03 — Fluxo OAuth sem sessão ativa
-**Dado** que o usuário não possui sessão ativa no portal
-**Quando** executa `aitk login`
-**Então** o browser abre o GitHub para autenticação, após autorizar o CLI exibe sucesso em menos de 30s.
-
-### CA-04 — Rejeição de host inválido (proteção SSRF)
-**Dado** que a requisição ao web app inclui um `host` diferente de `127.0.0.1` ou `::1`
-**Quando** o web app processa a requisição em `/api/auth/cli-callback`
-**Então** retorna HTTP 400 sem redirecionar.
-
-### CA-05 — Cookie de host preservado no fluxo OAuth
-**Dado** que o fluxo OAuth completo é executado (sem sessão ativa)
-**Quando** o callback do GitHub chega em `/api/auth/callback`
-**Então** o cookie `aitk-cli-host` está presente e é usado para construir a URL correta de retorno ao CLI.
-
-### CA-06 — Nenhuma regressão no fluxo `--token`
-**Quando** executa `aitk login --token aitk_xxx`
-**Então** o token é verificado e o login é concluído normalmente (comportamento inalterado).
-
-### CA-07 — Timeout com mensagem orientativa
-**Dado** que o callback não é recebido em 120s
-**Quando** o timeout expira
-**Então** o CLI exibe mensagem de erro que inclui sugestão de usar `aitk login --token <token>` como alternativa.
+| # | Critério | Como Verificar |
+|---|---|---|
+| CA-01 | Push na `main` dispara CI automaticamente | Verificar execução de `ci.yml` no GitHub Actions após push |
+| CA-02 | Deploy na Vercel não ocorre se CI falhar | Fazer push com código inválido e confirmar que Vercel não realiza deploy |
+| CA-03 | Deploy na Vercel ocorre automaticamente após CI passar na `main` | Fazer push válido e confirmar deploy bem-sucedido na Vercel |
+| CA-04 | Commit `feat:` no PR → release-please bump minor após merge | Criar PR com `feat:`, mergear, confirmar PR de release com bump minor |
+| CA-05 | Commit `fix:` no PR → release-please bump patch após merge | Criar PR com `fix:`, mergear, confirmar PR de release com bump patch |
+| CA-06 | Merge do PR de release → GitHub Release criada automaticamente com tag | Confirmar criação de tag e release no GitHub após merge do PR do release-please |
+| CA-07 | GitHub Release criada → `npm-publish.yml` publica `@tarcisiojunior/shared` e `aitk-cli` | Verificar execução de `npm-publish.yml` após release e confirmar versões no npm |
+| CA-08 | Commits com formato inválido em PRs são rejeitados pelo commitlint | Criar PR com commit `bad message` e confirmar falha no job `commitlint` |
+| CA-09 | Publicação de versão já existente no npm é ignorada sem falha | Executar `npm-publish.yml` com versão já publicada e confirmar skip sem erro |
+| CA-10 | `vercel.json` não contém escrita de `"success":false` no build command | Revisar `vercel.json` após fix e confirmar que o build do Next.js não é comprometido |
 
 ---
 
-## Contexto Técnico Relevante
+## Decisões de Arquitetura Documentadas
 
-| Componente | Arquivo | Responsabilidade |
-|---|---|---|
-| CLI — comando login | `packages/cli/src/commands/login.ts` | Inicia servidor local, abre browser, aguarda callback |
-| CLI — servidor HTTP local | `waitForOAuthCallback()` em `login.ts` (L92–L204) | Escuta em `::` com fallback para `127.0.0.1` |
-| Web — fast path | `packages/web/src/app/api/auth/cli-callback/route.ts` | Detecta sessão ativa e redireciona para CLI |
-| Web — OAuth callback | `packages/web/src/app/api/auth/callback/route.ts` | Conclui OAuth e redireciona para CLI |
-| Web — geração de token | `packages/web/src/lib/api/generate-cli-token.ts` | Gera e persiste CLI token no banco |
+1. **Trigger para Vercel deploy**: Será implementado via `workflow_run` aguardando `ci.yml` com status `completed` e `conclusion: success`, ou via Vercel Deploy Hook acionado por step no próprio CI. A abordagem final será decidida na fase de implementação com base nas credenciais e configurações disponíveis no repositório.
 
-**Parâmetros atuais enviados pelo CLI ao web app:**
-- `port`: porta aleatória escolhida pelo SO (parâmetro existente)
-- `state`: 256 bits de entropia, nonce CSRF (parâmetro existente)
+2. **Fluxo de release semântico**: Mantém o release-please como único responsável por bump de versão e criação de tags/releases. Não haverá bump manual de versões. A configuração existente em `release-please-config.json` (monorepo com três componentes) deve ser preservada.
 
-**Novo parâmetro proposto:**
-- `host`: endereço IP real em que o servidor está escutando (`127.0.0.1` ou `::1`)
+3. **GitHub App da Vercel vs. GitHub Actions**: Para garantir que o CI seja gate obrigatório antes do deploy, o deploy via GitHub App da Vercel deve ser desabilitado para a branch `main` (ou configurado para ignorá-la), e o deploy de produção deve ser orquestrado exclusivamente pelo GitHub Actions.
 
-**Cookies CLI no web app (atuais):**
-- `aitk-cli-port`: porta do servidor CLI (maxAge: 600s, httpOnly, secure, sameSite: lax)
-- `aitk-cli-state`: nonce CSRF (mesmas flags)
-
-**Novo cookie proposto:**
-- `aitk-cli-host`: host real do servidor CLI (mesmas flags de segurança)
+4. **Escopo de publicação no npm**: Os pacotes `@tarcisiojunior/web` (private: true) e o registry interno (`publish.yml`) estão fora do escopo do deploy automático no npm. Apenas `@tarcisiojunior/shared` e `aitk-cli` são publicados no npm público.
