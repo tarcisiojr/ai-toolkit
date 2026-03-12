@@ -77,6 +77,7 @@ export async function GET(request: NextRequest) {
         // Verificar presença de cookies CLI para fluxo de login via terminal
         const cliPort = request.cookies.get('aitk-cli-port')?.value;
         const cliState = request.cookies.get('aitk-cli-state')?.value;
+        const cliHost = request.cookies.get('aitk-cli-host')?.value ?? '127.0.0.1'; // default retrocompatível
 
         if (cliPort && cliState) {
           console.log(`[auth/callback] Fluxo CLI detectado: port=${cliPort}`);
@@ -88,13 +89,16 @@ export async function GET(request: NextRequest) {
 
             const tokenResult = await generateCliToken(sessionUser.id);
 
-            const callbackUrl = `http://localhost:${cliPort}/callback?token=${encodeURIComponent(tokenResult.token)}&state=${encodeURIComponent(cliState)}`;
-            console.log(`[auth/callback] Redirecionando CLI para: http://localhost:${cliPort}/callback`);
+            // Formatar host IPv6 com colchetes (RFC 2732)
+            const hostFormatted = cliHost.includes(':') ? `[${cliHost}]` : cliHost;
+            const callbackUrl = `http://${hostFormatted}:${cliPort}/callback?token=${encodeURIComponent(tokenResult.token)}&state=${encodeURIComponent(cliState)}`;
+            console.log(`[auth/callback] Redirecionando CLI para: http://${hostFormatted}:${cliPort}/callback`);
 
             const response = NextResponse.redirect(callbackUrl);
             // Limpar cookies CLI após uso
             response.cookies.delete('aitk-cli-port');
             response.cookies.delete('aitk-cli-state');
+            response.cookies.delete('aitk-cli-host');
             response.cookies.delete('aitk-auth-next');
             return response;
           } catch (cliErr) {
@@ -105,6 +109,7 @@ export async function GET(request: NextRequest) {
             );
             response.cookies.delete('aitk-cli-port');
             response.cookies.delete('aitk-cli-state');
+            response.cookies.delete('aitk-cli-host');
             response.cookies.delete('aitk-auth-next');
             return response;
           }

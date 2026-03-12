@@ -151,10 +151,13 @@ function waitForOAuthCallback(): Promise<CliCallbackResult> {
       }
 
       const port = address.port;
+      const rawAddress = address.address;
+      // Normalizar '::' (wildcard de bind) para '::1' (loopback IPv6 concreto)
+      const host = rawAddress === '::' ? '::1' : rawAddress;
 
       // Constrói URL para o web app (intermediário OAuth)
       const authUrl =
-        `${WEB_APP_URL}/api/auth/cli-callback?port=${port}&state=${encodeURIComponent(expectedState)}`;
+        `${WEB_APP_URL}/api/auth/cli-callback?port=${port}&state=${encodeURIComponent(expectedState)}&host=${encodeURIComponent(host)}`;
 
       logger.print(`  ${logger.stepIndicator(1, 3)} ${chalk.gray('Abrindo navegador para autenticacao via GitHub...')}`);
       logger.blank();
@@ -191,7 +194,7 @@ function waitForOAuthCallback(): Promise<CliCallbackResult> {
       if (!resolved) {
         server.close();
         reject(new Error(
-          `Tempo limite de ${OAUTH_TIMEOUT_MS / 1000}s excedido. Tente novamente.`,
+          `Tempo limite de ${OAUTH_TIMEOUT_MS / 1000}s excedido. Tente novamente ou use: aitk login --token <token>`,
         ));
       }
     }, OAUTH_TIMEOUT_MS);
