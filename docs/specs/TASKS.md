@@ -1,51 +1,31 @@
-# Tarefas — Issue #9: Erro ao instalar dependências (`npm ci`)
+# Tarefas de Implementação — Issue #6: Erro ao autenticar pelo CLI (Timeout OAuth)
 
 > **Referências:** [REQUIREMENTS.md](./REQUIREMENTS.md) | [DESIGN.md](./DESIGN.md)
 >
-> **Estratégia adotada:** Atualizar as referências a `@tarcisiojunior/shared` nos pacotes consumidores (`cli` e `web`) para a versão `0.2.2` e regenerar o `package-lock.json` via `npm install`, restaurando a sincronia exigida pelo `npm ci`.
+> **Estratégia adotada:** Opção A do design — modificar o bind do servidor HTTP temporário no CLI para dual-stack IPv4+IPv6 (`'::'`) com fallback automático para `'127.0.0.1'` em caso de `EAFNOSUPPORT`/`EADDRNOTAVAIL`. O pacote web não será alterado.
 
 ---
 
-## 1. Atualização dos Manifestos dos Pacotes Consumidores
+## 1. Correção do Servidor HTTP Local (CLI)
 
-> Ajustar as referências à dependência interna `@tarcisiojunior/shared` nos pacotes que a consomem. Deve ser feito antes da regeneração do lock file.
+- [x] 1.1 Modificar `server.listen(0, '127.0.0.1', cb)` para tentar bind em `'::'` (dual-stack IPv4+IPv6) em `packages/cli/src/commands/login.ts` — linha 146
+- [x] 1.2 Adicionar handler de erro `'error'` no servidor para capturar `EAFNOSUPPORT` e `EADDRNOTAVAIL` e realizar fallback para `'127.0.0.1'` em `packages/cli/src/commands/login.ts`
+- [x] 1.3 Garantir que a lógica de obtenção de porta (`server.address().port`) e abertura do navegador (`openBrowser`) permaneça apenas dentro do evento `'listening'`, funcionando corretamente tanto no caminho dual-stack quanto no fallback IPv4
 
-- [x] 1.1 Editar `packages/cli/package.json` alterando `"@tarcisiojunior/shared": "0.2.1"` para `"@tarcisiojunior/shared": "0.2.2"` (RF-02 / AC-02)
-- [x] 1.2 Editar `packages/web/package.json` alterando `"@tarcisiojunior/shared": "0.2.1"` para `"@tarcisiojunior/shared": "0.2.2"` (RF-02 / AC-03)
+## 2. Verificação de Integridade do Comportamento Existente
 
----
+- [x] 2.1 Confirmar que a validação de `state` (proteção CSRF) em `packages/cli/src/commands/login.ts` permanece intacta após a refatoração do bind — resposta HTTP 400 para state inválido ou ausente
+- [x] 2.2 Confirmar que o timeout de 120s (`OAUTH_TIMEOUT_MS`) continua funcionando corretamente e que o evento `'close'` limpa o `setTimeout` após o fallback também
+- [x] 2.3 Confirmar que `packages/web/src/app/api/auth/callback/route.ts` não requer alteração — a URL `http://localhost:${cliPort}/callback` permanece compatível com o servidor dual-stack
 
-## 2. Regeneração do Lock File
+## 3. Validação Manual / Critérios de Aceitação
 
-> Depende da conclusão de todas as tarefas do grupo 1.
-
-- [x] 2.1 Executar `npm install` na raiz do monorepo para regenerar o `package-lock.json` em sincronia com os `package.json` atualizados (DT-02 / RF-01 / AC-04)
-
----
-
-## 3. Verificação Local
-
-> Validar que a sincronia foi restaurada e que o `npm ci` funciona antes de abrir o PR.
-
-- [x] 3.1 Verificar que `package-lock.json` registra `packages/shared` com `"version": "0.2.2"` executando `grep -A3 '"packages/shared"' package-lock.json` (AC-04)
-- [x] 3.2 Executar `rm -rf node_modules && npm ci` localmente para confirmar que a instalação limpa conclui sem erros (AC-05)
+- [x] 3.1 Verificar que `aitk login` conclui com sucesso em ambiente Linux com `localhost → ::1` (IPv6): servidor deve aceitar a conexão do navegador sem timeout
+- [x] 3.2 Verificar que `aitk login` conclui com sucesso em ambiente com `localhost → 127.0.0.1` (IPv4, macOS/Windows): regressão não introduzida
+- [x] 3.3 Verificar que callback com `state` inválido ainda retorna HTTP 400 e encerra o servidor
+- [x] 3.4 Verificar que o fluxo web sem CLI (sem cookies `aitk-cli-port`/`aitk-cli-state`) não é afetado
 
 ---
 
-## 4. Commit e Push
-
-> Depende da conclusão de todas as tarefas dos grupos 1, 2 e 3.
-
-- [x] 4.1 Commitar os três arquivos modificados (`packages/cli/package.json`, `packages/web/package.json`, `package-lock.json`) na branch `fix/issue-9` com mensagem descritiva (ex.: `fix(deps): sync @tarcisiojunior/shared to 0.2.2 and regenerate lock file`)
-- [ ] 4.2 Fazer push da branch `fix/issue-9` para o repositório remoto e abrir Pull Request apontando para `main`
-
----
-
-## 5. Verificação no CI
-
-> Depende do push e abertura do PR (tarefa 4.2).
-
-- [ ] 5.1 Confirmar que o job `commitlint` passa sem erros de `npm ci` na aba "Actions" do PR (AC-05)
-- [ ] 5.2 Confirmar que o job `quality` (lint + type-check + tests) passa sem erros (AC-07)
-- [ ] 5.3 Confirmar que o job `build` (`npx turbo run build`) conclui com sucesso (AC-06)
-- [ ] 5.4 Confirmar que o job `validate` (publish) passa sem erros de `npm ci` (RF-03)
+*Documento gerado automaticamente pelo pipeline SDD — Fase 3 (Tarefas).*
+*Issue: #6 | Branch: fix/issue-6 | Data: 2026-03-12*

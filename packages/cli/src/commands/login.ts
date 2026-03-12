@@ -142,8 +142,8 @@ function waitForOAuthCallback(): Promise<CliCallbackResult> {
       res.end('Not Found');
     });
 
-    // Escuta em porta aleatória (0 = SO escolhe uma porta disponível)
-    server.listen(0, '127.0.0.1', () => {
+    // Callback executado após bind bem-sucedido (dual-stack ou fallback IPv4)
+    const onListening = () => {
       const address = server.address();
       if (!address || typeof address === 'string') {
         reject(new Error('Falha ao iniciar servidor local'));
@@ -170,7 +170,21 @@ function waitForOAuthCallback(): Promise<CliCallbackResult> {
       logger.blank();
 
       openBrowser(authUrl);
+    };
+
+    // Handler de erro: fallback para IPv4 se IPv6 não estiver disponível
+    server.once('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EAFNOSUPPORT' || err.code === 'EADDRNOTAVAIL') {
+        // IPv6 indisponível (kernel sem suporte ou desabilitado) — fallback para IPv4
+        server.listen(0, '127.0.0.1', onListening);
+      } else {
+        reject(err);
+      }
     });
+
+    // Escuta em porta aleatória com dual-stack IPv4+IPv6 (0 = SO escolhe a porta)
+    // Em Node.js, '::' com ipv6Only=false (padrão) aceita conexões IPv4 e IPv6
+    server.listen(0, '::', onListening);
 
     // Timeout para evitar que o servidor fique esperando indefinidamente
     const timeout = setTimeout(() => {
