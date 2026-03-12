@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { generateCliToken } from '@/lib/api/generate-cli-token';
 
 const WEB_APP_URL = 'https://ai-toolkit-henna.vercel.app';
 
@@ -9,6 +10,9 @@ const WEB_APP_URL = 'https://ai-toolkit-henna.vercel.app';
  * Recebe port e state do CLI, salva em cookies seguros e redireciona
  * para o OAuth do Supabase usando a URL do web app como redirect_to
  * (já registrada na allowlist do Supabase).
+ *
+ * Se o usuário já possui sessão Supabase ativa no browser, gera o CLI
+ * token diretamente e redireciona para localhost sem passar pelo OAuth.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -32,8 +36,28 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Obter URL OAuth do Supabase via SDK (suporta PKCE)
+  // Instanciar cliente Supabase e verificar sessão existente
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    // Caminho rápido: usuário já autenticado — gerar token CLI diretamente
+    try {
+      const tokenResult = await generateCliToken(user.id);
+      const callbackUrl = `http://localhost:${port}/callback`
+        + `?token=${encodeURIComponent(tokenResult.token)}`
+        + `&state=${encodeURIComponent(state)}`;
+      return NextResponse.redirect(callbackUrl);
+    } catch (err) {
+      console.error('[cli-callback] Erro ao gerar CLI token para sessão existente:', err);
+      return NextResponse.json(
+        { error: 'Falha ao gerar CLI token.' },
+        { status: 500 },
+      );
+    }
+  }
+
+  // Caminho OAuth: sem sessão — obter URL OAuth do Supabase via SDK (suporta PKCE)
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'github',
     options: {
