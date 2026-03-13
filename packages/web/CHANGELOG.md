@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.5](https://github.com/tarcisiojr/ai-toolkit/compare/@tarcisiojunior/web-v0.3.4...@tarcisiojunior/web-v0.3.5) (2026-03-13)
+
+
+### Correções
+
+* **deps:** atualizar referência do shared para 0.2.3 em cli e web ([d7940b4](https://github.com/tarcisiojr/ai-toolkit/commit/d7940b440531a18ba759b0c14706dd5f83841020))
+
 ## [0.3.4](https://github.com/tarcisiojr/ai-toolkit/compare/@tarcisiojunior/web-v0.3.3...@tarcisiojunior/web-v0.3.4) (2026-03-12)
 
 
