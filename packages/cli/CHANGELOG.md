@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/tarcisiojr/ai-toolkit/compare/aitk-cli-v0.2.4...aitk-cli-v0.2.5) (2026-03-13)
+
+
+### Correções
+
+* **cli:** corrigir install falhando quando latest_version é null no registro ([e95c3b8](https://github.com/tarcisiojr/ai-toolkit/commit/e95c3b8130e0e6f883ac3fff2a13e5fd49e2254d))
+
 ## [0.2.4](https://github.com/tarcisiojr/ai-toolkit/compare/aitk-cli-v0.2.3...aitk-cli-v0.2.4) (2026-03-12)
 
 
