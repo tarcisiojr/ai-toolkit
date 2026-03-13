@@ -58,7 +58,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@tarcisiojunior/shared": "0.2.2",
+    "@tarcisiojunior/shared": "0.2.3",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "inquirer": "^12.4.2",
