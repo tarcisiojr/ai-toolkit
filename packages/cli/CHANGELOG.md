@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.6](https://github.com/tarcisiojr/ai-toolkit/compare/aitk-cli-v0.2.5...aitk-cli-v0.2.6) (2026-03-13)
+
+
+### Correções
+
+* **cli:** parar spinner antes de exibir erro no publish e install ([8929c76](https://github.com/tarcisiojr/ai-toolkit/commit/8929c7680c0e5c98f72ef07228cfc1f4102c9d8f))
+
 ## [0.2.5](https://github.com/tarcisiojr/ai-toolkit/compare/aitk-cli-v0.2.4...aitk-cli-v0.2.5) (2026-03-13)
 
 
