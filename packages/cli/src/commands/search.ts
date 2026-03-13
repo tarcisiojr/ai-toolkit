@@ -57,8 +57,8 @@ export const searchCommand = new Command('search')
         rows: results.data.map((artifact) => [
           chalk.white.bold(artifact.slug),
           logger.typeBadge(artifact.type),
-          chalk.gray(`v${artifact.latestVersion || '0.0.0'}`),
-          formatDownloads(artifact.totalDownloads),
+          artifact.latestVersion ? chalk.gray(`v${artifact.latestVersion}`) : chalk.yellow('—'),
+          formatDownloads(artifact.totalDownloads ?? 0),
         ]),
       });
 

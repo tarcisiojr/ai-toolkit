@@ -158,13 +158,20 @@ export const installCommand = new Command('install')
       } else {
         // Usa a versão latest do artefato
         if (!artifactData.latestVersion) {
-          spinner1.fail(
-            `${logger.stepIndicator(1, totalSteps)} Artefato não possui nenhuma versão publicada`,
-          );
-          logger.blank();
-          return;
+          // Fallback: buscar versões disponíveis diretamente
+          const versionsResponse = await client.getVersions(scope, name);
+          if (versionsResponse.data.length > 0) {
+            resolvedVersion = versionsResponse.data[0].version;
+          } else {
+            spinner1.fail(
+              `${logger.stepIndicator(1, totalSteps)} Artefato não possui nenhuma versão publicada`,
+            );
+            logger.blank();
+            return;
+          }
+        } else {
+          resolvedVersion = artifactData.latestVersion;
         }
-        resolvedVersion = artifactData.latestVersion;
       }
 
       spinner1.succeed(
