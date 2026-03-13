@@ -10,6 +10,7 @@ const CONFIG_KEYS: Record<string, string> = {
   defaultTool: 'Ferramenta alvo padrão (claude-code, opencode, gemini-cli)',
   cacheDir: 'Diretório do cache local',
   cacheMaxSize: 'Tamanho máximo do cache (ex: 500MB)',
+  'source.ttl': 'TTL em segundos para sincronização automática de fontes Git (padrão: 3600)',
 };
 
 export const configCommand = new Command('config')
@@ -62,7 +63,7 @@ configCommand
     }
 
     const config = getConfig();
-    const value = config[key as keyof CliConfig];
+    const value = ((config as unknown) as Record<string, unknown>)[key];
     logger.print(String(value || ''));
   });
 
@@ -80,9 +81,9 @@ configCommand
     }
 
     const config = getConfig();
-    const oldValue = config[key as keyof CliConfig];
+    const oldValue = ((config as unknown) as Record<string, unknown>)[key];
 
-    saveConfig({ [key]: value });
+    saveConfig({ [key]: value } as Partial<CliConfig>);
 
     logger.blank();
     logger.success(`${chalk.cyan(key)} atualizado`);

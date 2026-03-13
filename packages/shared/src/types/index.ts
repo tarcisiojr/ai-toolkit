@@ -17,3 +17,17 @@ export type { Profile, CliAuth, ApiToken } from './user.js';
 export type { TeamRole, Team, TeamMember } from './team.js';
 
 export type { PaginationMeta, ApiResponse, ApiError, SearchParams } from './api.js';
+
+export type {
+  SourceType,
+  SourceAdapterType,
+  Source,
+  SourceConfig,
+  SourcesManifest,
+  MarketplaceManifest,
+  MarketplacePlugin,
+  MarketplaceSkill,
+  SkillMdFrontmatter,
+  CreateOptions,
+  ArtifactTemplate,
+} from './source.js';

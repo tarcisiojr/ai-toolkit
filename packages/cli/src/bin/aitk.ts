@@ -16,6 +16,8 @@ import { configCommand } from '../commands/config.js';
 import { syncCommand } from '../commands/sync.js';
 import { initCommand } from '../commands/init.js';
 import { completionsCommand } from '../commands/completions.js';
+import { sourceCommand } from '../commands/source.js';
+import { createCommand } from '../commands/create.js';
 import { logger } from '../utils/logger.js';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -47,6 +49,8 @@ program.addCommand(configCommand);
 program.addCommand(syncCommand);
 program.addCommand(initCommand);
 program.addCommand(completionsCommand);
+program.addCommand(sourceCommand);
+program.addCommand(createCommand);
 
 // ── Help personalizado com banner e cores ────────────────────────────────
 program.configureHelp({
@@ -81,12 +85,14 @@ program.configureHelp({
     const authCommands = ['login', 'logout'];
     const registryCommands = ['search', 'install', 'update', 'remove', 'publish'];
     const projectCommands = ['init', 'list', 'status', 'sync', 'config'];
+    const sourceCommands = ['source', 'create'];
     const teamCommands = ['team'];
     const utilCommands = ['completions'];
 
     const groups: Array<{ label: string; names: string[] }> = [
       { label: 'Registry', names: registryCommands },
       { label: 'Projeto', names: projectCommands },
+      { label: 'Fontes Git', names: sourceCommands },
       { label: 'Equipes', names: teamCommands },
       { label: 'Autenticacao', names: authCommands },
       { label: 'Utilitarios', names: utilCommands },

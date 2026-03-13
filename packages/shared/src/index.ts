@@ -20,6 +20,17 @@ export type {
   ApiResponse,
   ApiError,
   SearchParams,
+  SourceType,
+  SourceAdapterType,
+  Source,
+  SourceConfig,
+  SourcesManifest,
+  MarketplaceManifest,
+  MarketplacePlugin,
+  MarketplaceSkill,
+  SkillMdFrontmatter,
+  CreateOptions,
+  ArtifactTemplate,
 } from './types/index.js';
 
 export {
