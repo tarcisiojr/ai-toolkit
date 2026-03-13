@@ -2,6 +2,10 @@ name: Release Please
 
 # Automatiza criação de Release PRs e GitHub Releases
 # baseado em commits convencionais (feat, fix, etc.)
+#
+# IMPORTANTE: Usa RELEASE_PAT (Personal Access Token) em vez de GITHUB_TOKEN
+# para que as releases criadas acionem outros workflows (ex: npm-publish).
+# Limitação do GitHub: eventos gerados por GITHUB_TOKEN não disparam workflows.
 
 on:
   push:
@@ -18,8 +22,7 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
-          # Usa configuração manifest para monorepo
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          # Token padrão do GitHub
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # PAT permite que releases criadas acionem o workflow npm-publish
+          token: ${{ secrets.RELEASE_PAT }}
