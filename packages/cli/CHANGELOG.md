@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.8](https://github.com/tarcisiojr/ai-toolkit/compare/aitk-cli-v0.2.7...aitk-cli-v0.2.8) (2026-03-13)
+
+
+### Correções
+
+* **deps:** atualizar referência do shared para 0.2.3 em cli e web ([d7940b4](https://github.com/tarcisiojr/ai-toolkit/commit/d7940b440531a18ba759b0c14706dd5f83841020))
+
 ## [0.2.7](https://github.com/tarcisiojr/ai-toolkit/compare/aitk-cli-v0.2.6...aitk-cli-v0.2.7) (2026-03-13)
 
 
