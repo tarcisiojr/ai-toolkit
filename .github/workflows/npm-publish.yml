@@ -90,6 +90,9 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Verificar consistência de versões internas
+        run: node scripts/sync-shared-version.js --check
+
       - name: Build shared
         run: npx turbo run build --filter=@tarcisiojunior/shared
 
