@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/tarcisiojr/ai-toolkit/compare/@tarcisiojunior/shared-v0.2.2...@tarcisiojunior/shared-v0.2.3) (2026-03-13)
+
+
+### Funcionalidades
+
+* **cli:** adicionar fontes Git e comando create ([521e259](https://github.com/tarcisiojr/ai-toolkit/commit/521e259e165abdc362283db985a9bfc320cd33e9))
+
 ## [0.2.2](https://github.com/tarcisiojr/ai-toolkit/compare/@tarcisiojunior/shared-v0.2.1...@tarcisiojunior/shared-v0.2.2) (2026-03-12)
 
 

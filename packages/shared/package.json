@@ -1,6 +1,6 @@
 {
   "name": "@tarcisiojunior/shared",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "type": "module",
   "description": "Shared types, validators and constants for the AI Toolkit ecosystem — package manager for AI coding tools.",
   "main": "./dist/index.js",
