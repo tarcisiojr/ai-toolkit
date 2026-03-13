@@ -7,13 +7,8 @@ name: Publish Artifact
 # - Execução manual (workflow_dispatch)
 
 on:
-  release:
-    types: [published]
-
-  push:
-    tags:
-      - 'v*'
-
+  # Não aciona automaticamente em releases (evita conflito com release-please).
+  # Use apenas workflow_dispatch para publicar artefatos no registry aitk.
   workflow_dispatch:
     inputs:
       artifact_dir:
