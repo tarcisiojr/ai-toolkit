@@ -75,8 +75,8 @@ function InlineEdit({
 
   return (
     <div className={`rounded-lg border ${borderClass} bg-white/[0.02] px-3 py-2 transition-colors`}>
-      <div className="flex items-center justify-between">
-        <span className="font-[family-name:var(--font-jetbrains)] text-xs text-[#64748b]">
+      <div className="flex items-center justify-between gap-2 min-w-0">
+        <span className="truncate font-[family-name:var(--font-jetbrains)] text-xs text-[#64748b]">
           {label}
         </span>
         {isOwner && !editing && (
@@ -189,8 +189,8 @@ function TagEditor({
   if (!editing) {
     return (
       <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-        <div className="flex items-center justify-between">
-          <span className="font-[family-name:var(--font-jetbrains)] text-xs text-[#64748b]">
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <span className="truncate font-[family-name:var(--font-jetbrains)] text-xs text-[#64748b]">
             {label}
           </span>
           {isOwner && (
@@ -313,8 +313,8 @@ function CheckboxEditor({
   if (!editing) {
     return (
       <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-        <div className="flex items-center justify-between">
-          <span className="font-[family-name:var(--font-jetbrains)] text-xs text-[#64748b]">
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <span className="truncate font-[family-name:var(--font-jetbrains)] text-xs text-[#64748b]">
             {label}
           </span>
           {isOwner && (
