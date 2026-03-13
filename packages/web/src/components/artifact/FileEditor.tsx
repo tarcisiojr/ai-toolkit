@@ -143,7 +143,7 @@ function FileEditorInner({ filePath, initialContent, onSave, onCancel }: FileEdi
   return (
     <div className="glass rounded-2xl p-4">
       {/* Toolbar */}
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <span className="font-[family-name:var(--font-jetbrains)] text-sm text-[#e2e8f0]">
             {filePath}
@@ -154,7 +154,7 @@ function FileEditorInner({ filePath, initialContent, onSave, onCancel }: FileEdi
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
-                  className={`px-2 py-0.5 font-[family-name:var(--font-jetbrains)] text-[10px] transition-colors ${
+                  className={`px-2 py-0.5 font-[family-name:var(--font-jetbrains)] text-[10px] transition-colors ${mode === 'split' ? 'hidden sm:inline-flex' : ''} ${
                     viewMode === mode
                       ? 'bg-[#00d4ff]/10 text-[#00d4ff]'
                       : 'text-[#64748b] hover:text-[#94a3b8]'
@@ -166,7 +166,7 @@ function FileEditorInner({ filePath, initialContent, onSave, onCancel }: FileEdi
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           <button
             onClick={onCancel}
             className="rounded px-3 py-1 font-[family-name:var(--font-jetbrains)] text-xs text-[#94a3b8] hover:bg-white/[0.05]"
@@ -188,13 +188,13 @@ function FileEditorInner({ filePath, initialContent, onSave, onCancel }: FileEdi
         {viewMode !== 'preview' && (
           <div
             ref={editorRef}
-            className="max-h-[600px] overflow-auto rounded-lg border border-white/[0.06] bg-[#0a0a0f]"
+            className="max-h-[400px] sm:max-h-[600px] overflow-auto rounded-lg border border-white/[0.06] bg-[#0a0a0f]"
           />
         )}
 
         {/* Preview (Markdown) */}
         {isMarkdown && viewMode !== 'editor' && (
-          <div className="max-h-[600px] overflow-auto rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+          <div className="max-h-[400px] sm:max-h-[600px] overflow-auto rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
             <div
               className="prose prose-invert prose-sm max-w-none"
               dangerouslySetInnerHTML={{

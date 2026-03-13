@@ -241,7 +241,7 @@ export default function FileBrowser({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* Árvore de arquivos */}
-        <div className="max-h-[500px] overflow-y-auto rounded-lg border border-white/[0.06] bg-white/[0.02] p-2">
+        <div className="max-h-[300px] sm:max-h-[500px] overflow-y-auto rounded-lg border border-white/[0.06] bg-white/[0.02] p-2">
           {tree.map((node) => (
             <TreeNodeComponent
               key={node.path}
@@ -254,7 +254,7 @@ export default function FileBrowser({
         </div>
 
         {/* Painel de visualização */}
-        <div className="max-h-[500px] overflow-y-auto rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+        <div className="max-h-[300px] sm:max-h-[500px] overflow-y-auto rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
           {!selectedFile ? (
             <p className="font-[family-name:var(--font-jetbrains)] text-sm text-[#64748b]">
               Selecione um arquivo para visualizar
