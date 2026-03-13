@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7](https://github.com/tarcisiojr/ai-toolkit/compare/aitk-cli-v0.2.6...aitk-cli-v0.2.7) (2026-03-13)
+
+
+### Funcionalidades
+
+* **cli:** adicionar fontes Git e comando create ([521e259](https://github.com/tarcisiojr/ai-toolkit/commit/521e259e165abdc362283db985a9bfc320cd33e9))
+
 ## [0.2.6](https://github.com/tarcisiojr/ai-toolkit/compare/aitk-cli-v0.2.5...aitk-cli-v0.2.6) (2026-03-13)
 
 
