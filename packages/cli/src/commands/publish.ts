@@ -123,6 +123,8 @@ export const publishCommand = new Command('publish')
     const totalSteps = 5;
     let tarballPath: string | null = null;
 
+    let activeSpinner: ReturnType<typeof ora> | null = null;
+
     try {
       // Verifica autenticação
       requireAuth();
@@ -138,6 +140,7 @@ export const publishCommand = new Command('publish')
         text: `${logger.stepIndicator(1, totalSteps)} Lendo manifesto...`,
         color: 'cyan',
       }).start();
+      activeSpinner = spinner1;
 
       const manifest = readArtifactManifest(dir);
       validateFiles(manifest, dir);
@@ -147,12 +150,14 @@ export const publishCommand = new Command('publish')
       spinner1.succeed(
         `${logger.stepIndicator(1, totalSteps)} Manifesto válido: ${chalk.cyan.bold(slug)}@${chalk.green(manifest.version)}`,
       );
+      activeSpinner = null;
 
       // ── Passo 2: Empacotar arquivos ─────────────────────────────────
       const spinner2 = ora({
         text: `${logger.stepIndicator(2, totalSteps)} Empacotando arquivos...`,
         color: 'cyan',
       }).start();
+      activeSpinner = spinner2;
 
       const { tarballPath: tPath, size, checksum } = createTarball(manifest, dir);
       tarballPath = tPath;
@@ -160,12 +165,14 @@ export const publishCommand = new Command('publish')
       spinner2.succeed(
         `${logger.stepIndicator(2, totalSteps)} Tarball criado ${chalk.gray(`(${formatBytes(size)}, ${checksum.slice(0, 15)}...)`)}`,
       );
+      activeSpinner = null;
 
       // ── Passo 3: Registrar artefato (se necessário) ─────────────────
       const spinner3 = ora({
         text: `${logger.stepIndicator(3, totalSteps)} Verificando registro no registry...`,
         color: 'cyan',
       }).start();
+      activeSpinner = spinner3;
 
       const client = createApiClient();
 
@@ -196,12 +203,14 @@ export const publishCommand = new Command('publish')
           `${logger.stepIndicator(3, totalSteps)} Artefato criado no registry ${chalk.gray(`(${options.access})`)}`,
         );
       }
+      activeSpinner = null;
 
       // ── Passo 4: Enviar versão ──────────────────────────────────────
       const spinner4 = ora({
         text: `${logger.stepIndicator(4, totalSteps)} Enviando versão ${manifest.version}...`,
         color: 'cyan',
       }).start();
+      activeSpinner = spinner4;
 
       // Monta o FormData para upload multipart
       const tarballBuffer = readFileSync(tarballPath);
@@ -250,12 +259,14 @@ export const publishCommand = new Command('publish')
       spinner4.succeed(
         `${logger.stepIndicator(4, totalSteps)} Versão ${chalk.green.bold(manifest.version)} enviada com sucesso`,
       );
+      activeSpinner = null;
 
       // ── Passo 5: Verificação final ──────────────────────────────────
       const spinner5 = ora({
         text: `${logger.stepIndicator(5, totalSteps)} Verificando publicação...`,
         color: 'cyan',
       }).start();
+      activeSpinner = spinner5;
 
       // Confirma que a versão foi registrada
       const versions = await client.getVersions(manifest.scope, manifest.name);
@@ -292,6 +303,10 @@ export const publishCommand = new Command('publish')
       logger.print(successBox);
       logger.blank();
     } catch (error) {
+      // Para o spinner ativo para não poluir a saída
+      if (activeSpinner) {
+        activeSpinner.fail();
+      }
       logger.blank();
       logger.error('Erro ao publicar artefato');
       logger.error(error instanceof Error ? error.message : 'Erro desconhecido');

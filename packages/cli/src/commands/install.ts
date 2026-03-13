@@ -116,6 +116,7 @@ export const installCommand = new Command('install')
 
     const totalSteps = 5;
     const tmpFiles: string[] = [];
+    let activeSpinner: ReturnType<typeof ora> | null = null;
 
     try {
       // ── Passo 1: Buscar artefato e resolver versão ────────────────
@@ -123,6 +124,7 @@ export const installCommand = new Command('install')
         text: `${logger.stepIndicator(1, totalSteps)} Resolvendo versao...`,
         color: 'cyan',
       }).start();
+      activeSpinner = spinner1;
 
       const client = createApiClient();
 
@@ -177,12 +179,14 @@ export const installCommand = new Command('install')
       spinner1.succeed(
         `${logger.stepIndicator(1, totalSteps)} Versão resolvida: ${chalk.green.bold(`v${resolvedVersion}`)} ${chalk.gray(`(${artifactData.type})`)}`,
       );
+      activeSpinner = null;
 
       // ── Passo 2: Baixar artefato ──────────────────────────────────
       const spinner2 = ora({
         text: `${logger.stepIndicator(2, totalSteps)} Baixando artefato...`,
         color: 'cyan',
       }).start();
+      activeSpinner = spinner2;
 
       const { buffer, size } = await client.downloadVersion(scope, name, resolvedVersion);
 
@@ -197,12 +201,14 @@ export const installCommand = new Command('install')
       spinner2.succeed(
         `${logger.stepIndicator(2, totalSteps)} Download completo ${chalk.gray(`(${formatBytes(size)})`)}`,
       );
+      activeSpinner = null;
 
       // ── Passo 3: Extrair e instalar arquivos ──────────────────────
       const spinner3 = ora({
         text: `${logger.stepIndicator(3, totalSteps)} Instalando arquivos...`,
         color: 'cyan',
       }).start();
+      activeSpinner = spinner3;
 
       // Extrai o tarball
       const extractDir = extractTarball(tarballPath);
@@ -245,12 +251,14 @@ export const installCommand = new Command('install')
       spinner3.succeed(
         `${logger.stepIndicator(3, totalSteps)} Arquivos instalados em ${chalk.gray(result.installedPath)}`,
       );
+      activeSpinner = null;
 
       // ── Passo 4: Atualizar manifesto do projeto ───────────────────
       const spinner4 = ora({
         text: `${logger.stepIndicator(4, totalSteps)} Atualizando aitk.json...`,
         color: 'cyan',
       }).start();
+      activeSpinner = spinner4;
 
       // Lê ou cria o manifesto do projeto
       let projectManifest = readManifest();
@@ -274,12 +282,14 @@ export const installCommand = new Command('install')
       spinner4.succeed(
         `${logger.stepIndicator(4, totalSteps)} Manifesto atualizado ${chalk.gray(`(${options.saveDev ? 'devArtifacts' : 'artifacts'})`)}`,
       );
+      activeSpinner = null;
 
       // ── Passo 5: Verificação final ────────────────────────────────
       const spinner5 = ora({
         text: `${logger.stepIndicator(5, totalSteps)} Verificando instalação...`,
         color: 'cyan',
       }).start();
+      activeSpinner = spinner5;
 
       // Verifica se os arquivos foram instalados corretamente
       if (existsSync(result.installedPath)) {
@@ -318,6 +328,9 @@ export const installCommand = new Command('install')
       logger.print(successBox);
       logger.blank();
     } catch (error) {
+      if (activeSpinner) {
+        activeSpinner.fail();
+      }
       logger.blank();
       logger.error('Erro ao instalar artefato');
       logger.error(error instanceof Error ? error.message : 'Erro desconhecido');
