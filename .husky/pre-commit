@@ -1,0 +1,6 @@
+node scripts/sync-shared-version.js
+
+# Se o script atualizou o arquivo, adiciona ao staging para entrar no commit
+if ! git diff --quiet packages/cli/package.json; then
+  git add packages/cli/package.json
+fi

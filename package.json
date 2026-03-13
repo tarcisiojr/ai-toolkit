@@ -12,7 +12,8 @@
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "prepare": "husky"
+    "prepare": "husky",
+    "sync-versions": "node scripts/sync-shared-version.js"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.0",
