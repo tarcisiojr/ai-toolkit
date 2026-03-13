@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.6](https://github.com/tarcisiojr/ai-toolkit/compare/@tarcisiojunior/web-v0.3.5...@tarcisiojunior/web-v0.3.6) (2026-03-13)
+
+
+### Correções
+
+* Layout quebrando no mobile ([#32](https://github.com/tarcisiojr/ai-toolkit/issues/32)) ([#33](https://github.com/tarcisiojr/ai-toolkit/issues/33)) ([d65e4db](https://github.com/tarcisiojr/ai-toolkit/commit/d65e4db049d6451ecd7bebec37b2694f7d41445b))
+
 ## [0.3.5](https://github.com/tarcisiojr/ai-toolkit/compare/@tarcisiojunior/web-v0.3.4...@tarcisiojunior/web-v0.3.5) (2026-03-13)
 
 
